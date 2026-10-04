@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Track Viewer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #f6f6f4; --card: #ffffff; --text: #1d1d1b; --muted: #6b6b66;
+    --accent: #d9480f; --border: #dcdcd6; --head: #ececE6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --card: #212120; --text: #ecece8; --muted: #9a9a93;
+      --accent: #ff8a4c; --border: #3a3a37; --head: #2b2b29;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --card: #212120; --text: #ecece8; --muted: #9a9a93;
+    --accent: #ff8a4c; --border: #3a3a37; --head: #2b2b29;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
+  main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 20px; }
+  #drop { display: block; box-sizing: border-box; border: 2px dashed var(--border); border-radius: 12px; background: var(--card);
+    padding: 36px 16px; text-align: center; cursor: pointer; transition: border-color .15s; }
+  #drop.over { border-color: var(--accent); }
+  #drop strong { color: var(--accent); }
+  #msg { margin: 16px 0; color: var(--muted); }
+  #msg.err { color: #d11a2a; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 16px 0; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+  .stat span { display: block; font-size: .8rem; color: var(--muted); }
+  .stat b { font-size: 1.2rem; }
+  .wrap { overflow-x: auto; max-height: 65vh; overflow-y: auto; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--card); }
+  table { border-collapse: collapse; width: 100%; font-size: .88rem; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); }
+  th { position: sticky; top: 0; background: var(--head); font-weight: 600; }
+  th:first-child, td:first-child { text-align: left; }
+  .hidden { display: none; }
+  .actions { margin: 0 0 12px; }
+  .range { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 0 0 8px; }
+  .range label { display: flex; flex-direction: column; font-size: .8rem; color: var(--muted); gap: 4px; }
+  .range input, .range select { font: inherit; width: 8.5em; padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text); }
+  #rangeInfo { color: var(--muted); font-size: .85rem; padding-bottom: 8px; }
+  .rangeMsg { margin: 0 0 10px; color: #d11a2a; font-size: .9rem; }
+  .rangeMsg:empty { display: none; }
+  td.nr, th.nr { color: var(--muted); }
+  .summary { margin: 22px 0 18px; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+  .summary h2 { font-size: 1.1rem; margin: 0 0 12px; }
+  .summary .stat { background: var(--bg); }
+  .muted { color: var(--muted); font-size: .85rem; margin: 0 0 8px; }
+  .summary .stats { margin-bottom: 8px; }
+
+  /* Layout-Schema (Drag & Drop) */
+  .ovh { font-size: .95rem; margin: 16px 0 4px; }
+  .ovlayout { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+  .ztitle { font-size: .78rem; color: var(--muted); margin-bottom: 3px; }
+  .zone { display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; padding: 6px; box-sizing: border-box;
+    border: 1px dashed var(--border); border-radius: 10px; background: var(--bg); }
+  .zone:empty::before { content: "Feld hierher ziehen"; color: var(--muted); font-size: .8rem; align-self: center; padding: 0 6px; }
+  .zone.over { border-color: #d11a2a; }
+  .chip { flex: 1 1 8em; min-width: 0; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px;
+    padding: 6px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: .84rem; }
+  .zone[data-zone="off"] .chip { flex: 0 1 auto; }
+  .chip.nodata { opacity: .55; border-style: dashed; }
+  .grip { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; color: var(--muted);
+    padding: 4px 6px; font-size: 1.05rem; line-height: 1; }
+  .chip-label { flex: 1 1 4em; min-width: 0; overflow-wrap: anywhere; }
+  .chip-ghost { opacity: .35; }
+  .chip-drag { box-shadow: 0 8px 22px rgba(0,0,0,.3); opacity: .95; }
+  .chip button.mv { background: transparent; color: var(--muted); border: 0; padding: 4px 6px; font-size: .75rem; line-height: 1; }
+  :root[data-theme="dark"] .chip button.mv { color: var(--muted); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip button.mv { color: var(--muted); } }
+  @media (max-width: 600px) {   /* Handy: Karten im Schema immer untereinander */
+    .zone .chip, .zone[data-zone="off"] .chip { flex: 1 1 100%; }
+  }
+  .pauseopt { display: flex; gap: 6px; align-items: center; font-size: .9rem; margin: 10px 0 4px; }
+
+  /* Overlay-Generator */
+  .ovtable { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .ovtable th { text-align: left; font-weight: 600; font-size: .78rem; color: var(--muted); padding: 4px 6px; }
+  .ovtable td { padding: 3px 6px; border: 0; white-space: nowrap; text-align: left; }
+  .ovtable input[type=text] { font: inherit; width: 100%; min-width: 5.5em; box-sizing: border-box; padding: 6px 8px;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); }
+  .ovtable input[type=checkbox], .range input[type=checkbox] { width: auto; padding: 0; }
+  .ovtable td.unit { color: var(--muted); }
+  .ovtable select { font: inherit; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); }
+  .na { color: var(--muted); font-size: .78rem; margin-left: 6px; }
+  .range label.chk { flex-direction: row; align-items: center; gap: 6px; color: var(--text); padding-bottom: 9px; }
+  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  :root[data-theme="dark"] button.secondary { color: var(--text); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.secondary { color: var(--text); } }
+  .btnrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0 4px; }
+  #ovWrap { margin-top: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; overflow: hidden; background: #12141b; }
+  #ovStage { position: relative; margin: 0 auto; }
+  #ovStage.checker { background-color: #1b1e27;
+    background-image: linear-gradient(45deg,#262a35 25%,transparent 25%),linear-gradient(-45deg,#262a35 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#262a35 75%),linear-gradient(-45deg,transparent 75%,#262a35 75%);
+    background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+  #ovScaler { position: absolute; top: 0; left: 0; transform-origin: top left; }
+  #ovTarget { width: 1920px; height: 1080px; box-sizing: border-box; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 48px; padding: 64px; background: #0f1117; color: #f4f5f7;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #ovTarget .ov-head { font-size: 36px; font-weight: 600; text-align: center; }
+  #ovTarget .ov-head:empty { display: none; }
+  #ovTarget .ov-hero { display: flex; justify-content: center; gap: 64px; flex-wrap: wrap; width: 100%; }
+  #ovTarget .ov-hero:empty, #ovTarget .ov-grid:empty { display: none; }
+  #ovTarget .ov-stat { text-align: center; }
+  #ovTarget .ov-label { color: #f97316; font-weight: 600; font-size: 20px; margin-bottom: 6px; }
+  #ovTarget .ov-value { font-size: 130px; font-weight: 700; line-height: 1; display: flex; align-items: baseline; justify-content: center; gap: 14px; }
+  #ovTarget .ov-unit { font-size: 36px; font-weight: 500; color: #8b90a0; }
+  #ovTarget .ov-div { font-size: 45px; color: #8b90a0; }
+  #ovTarget .ov-total { font-size: 52px; font-weight: 600; color: #8b90a0; }
+  #ovTarget .ov-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+  #ovTarget .ov-row { display: grid; gap: 20px; width: 100%; }
+  #ovTarget .ov-hero--3 .ov-value { font-size: 100px; }
+  #ovTarget .ov-stat .ov-sub { font-size: 24px; margin-top: 6px; }
+  #ovTarget .ov-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; padding: 20px 22px; text-align: center; }
+  #ovTarget .ov-card .ov-label { font-size: 16px; }
+  #ovTarget .ov-card .ov-value { font-size: 44px; gap: 8px; }
+  #ovTarget .ov-card .ov-unit { font-size: 17px; }
+  #ovTarget .ov-card .ov-div { font-size: 21px; }
+  #ovTarget .ov-card .ov-total { font-size: 24px; }
+  #ovTarget .ov-sub { color: #8b90a0; font-size: 15px; margin-top: 4px; }
+
+  .range { position: relative; }
+  .tip { padding-bottom: 6px; }
+  button.info { width: 26px; height: 26px; padding: 0; border-radius: 50%; font-size: .85rem; font-weight: 700;
+    background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  :root[data-theme="dark"] button.info { color: var(--accent); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.info { color: var(--accent); } }
+  .tipbox { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 10;
+    width: min(360px, 100%); box-sizing: border-box; padding: 12px 14px; font-size: .86rem; line-height: 1.5;
+    background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+  .tip:hover ~ .tipbox, .tip:focus-within ~ .tipbox, .tipbox.open { display: block; }
+  .tipbox b { color: var(--accent); }
+  .tipbox ul { margin: 6px 0 0; padding-left: 18px; }
+  button { font: inherit; background: var(--accent); color: #fff; border: 0; border-radius: 8px;
+    padding: 8px 16px; cursor: pointer; }
+  :root[data-theme="dark"] button { color: #161614; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button { color: #161614; } }
+  button:disabled { opacity: .5; cursor: default; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Track Viewer</h1>
+  <p class="sub">Schritt 1: FIT- oder GPX-Datei laden und die aufgezeichneten Werte als Tabelle ansehen. Alles läuft lokal in deinem Browser.</p>
+
+  <label id="drop">
+    <input id="file" type="file" accept=".fit,.gpx" class="hidden">
+    <div><strong>FIT- oder GPX-Datei auswählen</strong> oder hierher ziehen</div>
+  </label>
+  <div id="msg"></div>
+  <div id="stats" class="stats hidden"></div>
+  <section id="summary" class="summary hidden">
+    <h2>Zusammenfassung eines Zeitraums</h2>
+    <div class="range">
+      <label>Angabe als
+        <select id="sMode">
+          <option value="clock">Uhrzeit</option>
+          <option value="dur">Aktivitätsdauer</option>
+        </select>
+      </label>
+      <label>Von <input id="sFrom" type="text" inputmode="numeric" autocomplete="off"></label>
+      <label>Bis <input id="sTo" type="text" inputmode="numeric" autocomplete="off"></label>
+      <button id="sBtn" type="button">Zusammenfassen</button>
+    </div>
+    <div id="sHint" class="muted"></div>
+    <div id="sMsg" class="rangeMsg"></div>
+    <div id="sOut" class="stats"></div>
+    <div id="sNote" class="muted"></div>
+  </section>
+  <section id="overlay" class="summary hidden">
+    <h2>Overlay erzeugen (Test)</h2>
+    <p class="muted">Die Werte der Zusammenfassung werden automatisch übernommen. Das Layout stellst du unten im Schema ein, Werte und Namen kannst du in der Tabelle überschreiben. Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, das Overlay addiert den heutigen Wert.</p>
+    <div class="range">
+      <label>Titel (optional) <input id="ovTitle" type="text" placeholder="z. B. Tag 3" style="width:16em" autocomplete="off"></label>
+      <label>Auflösung (16:9)
+        <select id="ovRes">
+          <option value="1280x720">720p (1280 × 720)</option>
+          <option value="1920x1080" selected>1080p (1920 × 1080)</option>
+          <option value="2560x1440">1440p (2560 × 1440)</option>
+          <option value="3840x2160">2160p (3840 × 2160)</option>
+        </select>
+      </label>
+      <label class="chk"><input type="checkbox" id="ovTransparent"> Transparenter Hintergrund</label>
+    </div>
+    <h3 class="ovh">Layout</h3>
+    <p class="muted">Ziehe ein Feld am Griff ⠿ in eine Zeile oder nach „Nicht angezeigt“. Felder in derselben Zeile teilen sich deren Breite, ein einzelnes Feld füllt die ganze Zeile. Mit ◀ ▶ änderst du die Reihenfolge innerhalb einer Zeile. Es sind höchstens 3 Hauptfelder erlaubt.</p>
+    <div class="ovlayout" id="ovLayout"></div>
+    <label class="pauseopt"><input type="checkbox" id="ovOn_pause" checked> Pause als Zusatzzeile unter der Bewegungszeit anzeigen</label>
+    <div id="ovDndNote" class="rangeMsg"></div>
+    <h3 class="ovh">Werte und Namen</h3>
+    <div style="overflow-x:auto">
+      <table class="ovtable">
+        <thead><tr><th>Feld</th><th>Name im Overlay</th><th>Wert</th><th>Einheit</th><th>Summe bis Vortag</th></tr></thead>
+        <tbody id="ovRows"></tbody>
+      </table>
+    </div>
+    <div class="btnrow">
+      <button id="ovExport" type="button">Als PNG herunterladen</button>
+      <button id="ovReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
+      <button id="ovLayoutReset" type="button" class="secondary">Layout zurücksetzen</button>
+      <span id="ovInfo" class="muted" style="margin:0"></span>
+    </div>
+    <div id="ovLayoutMsg" class="rangeMsg"></div>
+    <div id="ovMsg" class="rangeMsg"></div>
+    <div id="ovWrap">
+      <div id="ovStage"><div id="ovScaler"><div id="ovTarget">
+        <div class="ov-head" id="ovHead"></div>
+        <div class="ov-hero" id="ovHero"></div>
+        <div class="ov-grid" id="ovGrid"></div>
+      </div></div></div>
+    </div>
+  </section>
+  <div id="actions" class="actions hidden"><button id="csvBtn" type="button">Alle Zeilen als CSV herunterladen</button></div>
+  <div id="range" class="range hidden">
+    <label>Von Zeile <input id="from" type="number" min="1" step="1" inputmode="numeric"></label>
+    <label>Bis Zeile <input id="to" type="number" min="1" step="1" inputmode="numeric"></label>
+    <button id="rangeBtn" type="button">Anzeigen</button>
+    <span id="rangeInfo"></span>
+    <span class="tip"><button id="tipBtn" type="button" class="info" aria-label="Hilfe zur Zeilenauswahl" aria-expanded="false">?</button></span>
+    <div id="tipBox" class="tipbox" role="tooltip">
+      <b>Was machen diese Felder?</b><br>
+      Die Datei besteht aus vielen Messpunkten, meist einem pro Sekunde. Jede Zeile der Tabelle ist ein Messpunkt, die Spalte „Nr.“ zeigt die Zeilennummer.
+      <ul>
+        <li><b>Von Zeile:</b> erste Zeile, die angezeigt wird</li>
+        <li><b>Bis Zeile:</b> letzte Zeile, die angezeigt wird</li>
+      </ul>
+      Beispiel: 500 bis 800 zeigt die Zeilen 500 bis 800 (301 Zeilen). Es sind höchstens 1000 Zeilen gleichzeitig möglich. Für die komplette Aufzeichnung nutze den CSV-Download.
+    </div>
+  </div>
+  <div id="rangeMsg" class="rangeMsg"></div>
+  <div id="tablewrap" class="wrap hidden"><table id="table"></table></div>
+</main>
+
+<script>
+// ---------- 1) FIT-Parser (minimal, nur "record"-Nachrichten) ----------
+// Basistypen: [Größe in Bytes, Lesefunktion, "ungültig"-Wert]
+const TYPES = {
+  0:  [1, (d,o)=>d.getUint8(o),  0xFF],
+  1:  [1, (d,o)=>d.getInt8(o),   0x7F],
+  2:  [1, (d,o)=>d.getUint8(o),  0xFF],
+  3:  [2, (d,o,le)=>d.getInt16(o,le),  0x7FFF],
+  4:  [2, (d,o,le)=>d.getUint16(o,le), 0xFFFF],
+  5:  [4, (d,o,le)=>d.getInt32(o,le),  0x7FFFFFFF],
+  6:  [4, (d,o,le)=>d.getUint32(o,le), 0xFFFFFFFF],
+  10: [1, (d,o)=>d.getUint8(o),  0],
+  11: [2, (d,o,le)=>d.getUint16(o,le), 0],
+  12: [4, (d,o,le)=>d.getUint32(o,le), 0],
+};
+
+// Welche Felder der "record"-Nachricht (Nr. 20) uns interessieren
+const FIELDS = {
+  253: "timestamp", 0: "lat", 1: "lon", 2: "alt", 3: "hr", 4: "cad",
+  5: "dist", 6: "speed", 7: "power", 73: "espeed", 78: "ealt"
+};
+// Session (18) und Lap (19) enthalten Zusammenfassungen, u. a. Kalorien
+const LAP_FIELDS = { 253: "timestamp", 2: "start", 7: "elapsed", 11: "cal" };
+const SESSION_FIELDS = { ...LAP_FIELDS, 8: "timer", 9: "distance", 14: "avgSpeed", 15: "maxSpeed",
+  16: "avgHr", 17: "maxHr", 18: "avgCad", 20: "avgPower", 21: "maxPower", 22: "ascent", 23: "descent",
+  124: "eAvgSpeed", 125: "eMaxSpeed" };
+const MSG_FIELDS = { 20: FIELDS, 18: SESSION_FIELDS, 19: LAP_FIELDS };
+
+function parseFit(buffer) {
+  const d = new DataView(buffer);
+  const headerSize = d.getUint8(0);
+  const dataSize = d.getUint32(4, true);
+  const sig = String.fromCharCode(d.getUint8(8), d.getUint8(9), d.getUint8(10), d.getUint8(11));
+  if (sig !== ".FIT") throw new Error("Das ist keine gültige FIT-Datei.");
+
+  const end = headerSize + dataSize;
+  const defs = {};
+  const records = [], sessions = [], laps = [];
+  let pos = headerSize, lastTs = 0;
+
+  while (pos < end) {
+    const h = d.getUint8(pos++);
+
+    if (h & 0x80) {                       // komprimierter Zeitstempel
+      const local = (h >> 5) & 3, off = h & 0x1F;
+      let ts = (lastTs & ~0x1F) + off;
+      if (off < (lastTs & 0x1F)) ts += 32;
+      lastTs = ts;
+      pos = readData(defs[local], pos, ts);
+    } else if (h & 0x40) {                // Definition
+      const local = h & 0x0F, hasDev = !!(h & 0x20);
+      pos++;                              // reserviert
+      const le = d.getUint8(pos++) === 0;
+      const global = d.getUint16(pos, le); pos += 2;
+      const n = d.getUint8(pos++);
+      const fields = [];
+      for (let i = 0; i < n; i++) {
+        fields.push({ num: d.getUint8(pos), size: d.getUint8(pos+1), type: d.getUint8(pos+2) & 0x1F });
+        pos += 3;
+      }
+      let devSize = 0;
+      if (hasDev) {
+        const nd = d.getUint8(pos++);
+        for (let i = 0; i < nd; i++) { devSize += d.getUint8(pos+1); pos += 3; }
+      }
+      defs[local] = { le, global, fields, devSize };
+    } else {                              // Datensatz
+      pos = readData(defs[h & 0x0F], pos, null);
+    }
+  }
+
+  function readData(def, p, compressedTs) {
+    if (!def) throw new Error("Defekte FIT-Datei (fehlende Definition).");
+    const rec = {};
+    const map = MSG_FIELDS[def.global];
+    for (const f of def.fields) {
+      if (map && map[f.num]) {
+        const t = TYPES[f.type];
+        if (t && t[0] === f.size) {
+          const v = t[1](d, p, def.le);
+          if (v !== t[2]) rec[map[f.num]] = v;
+        }
+      }
+      p += f.size;
+    }
+    p += def.devSize;
+    if (def.global === 20) {
+      if (compressedTs !== null && rec.timestamp === undefined) rec.timestamp = compressedTs;
+      if (rec.timestamp !== undefined) lastTs = rec.timestamp;
+      records.push(rec);
+    } else if (def.global === 18) sessions.push(rec);
+    else if (def.global === 19) laps.push(rec);
+    return p;
+  }
+  const out = records.map(convert);
+  out.sessions = sessions.map(convertSummary);
+  out.laps = laps.map(convertSummary);
+  return out;
+}
+
+// Session-/Lap-Daten in lesbare Werte umrechnen
+function convertSummary(r) {
+  const o = {};
+  if (r.cal !== undefined) o.cal = r.cal;
+  if (r.start !== undefined) o.start = new Date((r.start + 631065600) * 1000);
+  if (r.elapsed !== undefined) o.elapsed = r.elapsed / 1000;
+  if (r.timestamp !== undefined) o.end = new Date((r.timestamp + 631065600) * 1000);
+  if (r.timer !== undefined) o.timer = r.timer / 1000;                 // Sekunden
+  if (r.distance !== undefined) o.distance = r.distance / 100;         // Meter
+  if (r.ascent !== undefined) o.ascent = r.ascent;
+  if (r.descent !== undefined) o.descent = r.descent;
+  const avgS = r.eAvgSpeed ?? r.avgSpeed, maxS = r.eMaxSpeed ?? r.maxSpeed;
+  if (avgS !== undefined) o.avgSpeed = avgS / 1000 * 3.6;              // km/h
+  if (maxS !== undefined) o.maxSpeed = maxS / 1000 * 3.6;
+  for (const k of ["avgHr", "maxHr", "avgPower", "maxPower", "avgCad"]) if (r[k] !== undefined) o[k] = r[k];
+  return o;
+}
+
+
+// Rohwerte in sinnvolle Einheiten umrechnen
+function convert(r) {
+  const out = {};
+  if (r.timestamp !== undefined) out.time = new Date((r.timestamp + 631065600) * 1000);
+  if (r.lat !== undefined) out.lat = r.lat * 180 / 2147483648;
+  if (r.lon !== undefined) out.lon = r.lon * 180 / 2147483648;
+  const alt = r.ealt ?? r.alt;
+  if (alt !== undefined) out.alt = alt / 5 - 500;
+  const sp = r.espeed ?? r.speed;
+  if (sp !== undefined) out.speed = sp / 1000 * 3.6;   // mm/s -> km/h
+  if (r.dist !== undefined) out.dist = r.dist / 100000; // cm -> km
+  if (r.hr !== undefined) out.hr = r.hr;
+  if (r.cad !== undefined) out.cad = r.cad;
+  if (r.power !== undefined) out.power = r.power;
+  return out;
+}
+
+// ---------- GPX-Parser ----------
+function parseGpx(text) {
+  const doc = new DOMParser().parseFromString(text, "application/xml");
+  if (doc.getElementsByTagName("parsererror").length) throw new Error("Das ist keine gültige GPX-Datei.");
+  const pts = [...doc.getElementsByTagNameNS("*", "trkpt")];
+  if (!pts.length) throw new Error("Keine Trackpunkte (trkpt) gefunden.");
+  const num = (el, name) => {
+    const n = el.getElementsByTagNameNS("*", name)[0];
+    if (!n) return undefined;
+    const v = parseFloat(n.textContent);
+    return isNaN(v) ? undefined : v;
+  };
+  const rad = x => x * Math.PI / 180;
+  let dist = 0, prev = null;
+  return pts.map(p => {
+    const r = { lat: parseFloat(p.getAttribute("lat")), lon: parseFloat(p.getAttribute("lon")) };
+    const t = p.getElementsByTagNameNS("*", "time")[0];
+    if (t) r.time = new Date(t.textContent);
+    const ele = num(p, "ele"); if (ele !== undefined) r.alt = ele;
+    const hr = num(p, "hr"); if (hr !== undefined) r.hr = hr;
+    const cad = num(p, "cad"); if (cad !== undefined) r.cad = cad;
+    const pw = num(p, "power") ?? num(p, "PowerInWatts"); if (pw !== undefined) r.power = pw;
+    let d = 0;
+    if (prev) { // Entfernung per Haversine-Formel (km)
+      const a = Math.sin(rad(r.lat - prev.lat) / 2) ** 2 +
+        Math.cos(rad(prev.lat)) * Math.cos(rad(r.lat)) * Math.sin(rad(r.lon - prev.lon) / 2) ** 2;
+      d = 6371 * 2 * Math.asin(Math.sqrt(a));
+    }
+    dist += d; r.dist = dist;
+    const sp = num(p, "speed");
+    if (sp !== undefined) r.speed = sp * 3.6;
+    else if (prev && r.time && prev.time) {
+      const dt = (r.time - prev.time) / 1000;
+      if (dt > 0) r.speed = d / dt * 3600;
+    }
+    prev = r;
+    return r;
+  });
+}
+
+// ---------- 2) Anzeige ----------
+const COLS = [
+  ["time", "Zeit", v => v.toLocaleTimeString("de-DE")],
+  ["lat", "Breite", v => v.toFixed(6)],
+  ["lon", "Länge", v => v.toFixed(6)],
+  ["alt", "Höhe (m)", v => v.toFixed(1)],
+  ["speed", "Tempo (km/h)", v => v.toFixed(1)],
+  ["dist", "Distanz (km)", v => v.toFixed(2)],
+  ["hr", "Puls (bpm)", v => v],
+  ["cad", "Kadenz (rpm)", v => v],
+  ["power", "Leistung (W)", v => v],
+];
+const MAX_ROWS = 1000;
+let current = null;      // zuletzt geladene Daten (für den CSV-Export)
+let downloads = null;    // wird gesetzt, sobald die Download-Funktion verfügbar ist
+
+// ---------- CSV-Export ----------
+function toCsv({ rows, present }) {
+  const esc = v => { const t = String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+  const head = present.map(([, label]) => esc(label)).join(",");
+  const lines = rows.map(r => present.map(([k]) => {
+    const v = r[k];
+    if (v === undefined) return "";
+    if (k === "time") return v.toISOString();
+    if (k === "lat" || k === "lon") return v.toFixed(6);
+    if (typeof v === "number" && !Number.isInteger(v)) return v.toFixed(3);
+    return v;
+  }).map(esc).join(","));
+  return "\ufeff" + [head, ...lines].join("\r\n");   // BOM: Umlaute korrekt in Excel
+}
+
+async function saveCsv() {
+  if (!current || !downloads) return;
+  const base = current.name.replace(/\.[^.]+$/, "");
+  try {
+    await downloads.save({ filename: base + ".csv", data: toCsv(current) });
+  } catch (e) {
+    if (e && e.code !== "declined") msg("Download nicht möglich: " + (e.message || e.code), true);
+  }
+}
+document.getElementById("csvBtn").addEventListener("click", saveCsv);
+
+// Download-Funktion anfragen; ohne sie bleibt der Button einfach versteckt
+(async () => {
+  try {
+    if (window.claude && claude.use) {
+      downloads = await claude.use("downloads");
+      if (downloads && current) $("actions").classList.remove("hidden");
+    }
+  } catch (e) { downloads = null; }
+})();
+
+const $ = id => document.getElementById(id);
+const msg = (t, err) => { $("msg").textContent = t; $("msg").className = err ? "err" : ""; };
+
+function stat(label, value) { return `<div class="stat"><span>${label}</span><b>${value}</b></div>`; }
+const avg = a => a.reduce((x,y)=>x+y,0) / a.length;
+
+function show(rows, name) {
+  if (!rows.length) { msg("Keine Datenpunkte (record-Nachrichten) gefunden.", true); return; }
+  const present = COLS.filter(([k]) => rows.some(r => r[k] !== undefined));
+  current = { rows, present, name };
+  if (downloads) $("actions").classList.remove("hidden");
+
+  // Kennzahlen
+  const s = [stat("Datenpunkte", rows.length)];
+  const first = rows.find(r => r.time), last = [...rows].reverse().find(r => r.time);
+  if (first && last) {
+    const sec = Math.round((last.time - first.time) / 1000);
+    s.push(stat("Dauer", `${Math.floor(sec/3600)}h ${String(Math.floor(sec%3600/60)).padStart(2,"0")}m`));
+    s.push(stat("Aufzeichnung", sec / rows.length > 1.5 ? `alle ~${(sec/rows.length).toFixed(1)} s` : "ca. jede Sekunde"));
+  }
+  const dists = rows.map(r => r.dist).filter(v => v !== undefined);
+  if (dists.length) s.push(stat("Distanz", Math.max(...dists).toFixed(1) + " km"));
+  const hrs = rows.map(r => r.hr).filter(v => v !== undefined);
+  if (hrs.length) s.push(stat("Ø / Max Puls", `${Math.round(avg(hrs))} / ${Math.max(...hrs)}`));
+  const pw = rows.map(r => r.power).filter(v => v !== undefined);
+  if (pw.length) s.push(stat("Ø / Max Leistung", `${Math.round(avg(pw))} / ${Math.max(...pw)} W`));
+  $("stats").innerHTML = s.join("");
+  $("stats").classList.remove("hidden");
+
+  // Bereichsauswahl vorbelegen und erste Zeilen anzeigen
+  $("from").max = rows.length; $("to").max = rows.length;
+  $("from").value = 1;
+  $("to").value = Math.min(MAX_ROWS, rows.length);
+  $("rangeInfo").textContent = `von ${rows.length} Zeilen (max. ${MAX_ROWS} gleichzeitig)`;
+  $("range").classList.remove("hidden");
+  msg(`${name}: ${rows.length} Zeilen geladen.`);
+  setupSummary();
+  applyRange();
+}
+
+function applyRange() {
+  if (!current) return;
+  const { rows, present } = current;
+  const from = parseInt($("from").value, 10), to = parseInt($("to").value, 10);
+  const err = t => { $("rangeMsg").textContent = t; };
+
+  if (!Number.isInteger(from) || !Number.isInteger(to)) return err("Bitte Start- und Zielzeile als ganze Zahlen eingeben.");
+  if (from < 1 || to > rows.length) return err(`Die Zeilen müssen zwischen 1 und ${rows.length} liegen.`);
+  if (from > to) return err("Die Startzeile darf nicht größer als die Zielzeile sein.");
+  const count = to - from + 1;
+  if (count > MAX_ROWS) {
+    return err(`Du hast ${count} Zeilen ausgewählt, angezeigt werden aber höchstens ${MAX_ROWS}: ` +
+      "Mehr Zeilen machen die Seite langsam und unübersichtlich. " +
+      "Wähle einen kleineren Bereich oder lade für größere Mengen die komplette Datei als CSV herunter.");
+  }
+  err("");
+
+  let html = '<thead><tr><th class="nr">Nr.</th>' + present.map(([,l]) => `<th>${l}</th>`).join("") + "</tr></thead><tbody>";
+  for (let i = from - 1; i < to; i++) {
+    const r = rows[i];
+    html += `<tr><td class="nr">${i + 1}</td>` +
+      present.map(([k,,f]) => `<td>${r[k] !== undefined ? f(r[k]) : "–"}</td>`).join("") + "</tr>";
+  }
+  $("table").innerHTML = html + "</tbody>";
+  $("tablewrap").classList.remove("hidden");
+  $("tablewrap").scrollTop = 0;
+}
+
+$("rangeBtn").addEventListener("click", applyRange);
+// Hilfe-Box: Hover/Fokus per CSS, Klick/Tippen (Handy) schaltet sie um
+$("tipBtn").addEventListener("click", () => {
+  const open = $("tipBox").classList.toggle("open");
+  $("tipBtn").setAttribute("aria-expanded", open);
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest("#tipBtn, #tipBox")) { $("tipBox").classList.remove("open"); $("tipBtn").setAttribute("aria-expanded", false); }
+});
+["from", "to"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") applyRange(); }));
+
+// ---------- Zusammenfassung eines Zeitraums ----------
+const ELEV_THRESHOLD = 3;   // Höhenänderungen unter 3 m werden ignoriert (filtert Rauschen)
+const pad2 = n => String(n).padStart(2, "0");
+const fmtHMS = sec => { sec = Math.round(sec); return `${Math.floor(sec/3600)}:${pad2(Math.floor(sec%3600/60))}:${pad2(sec%60)}`; };
+const clockStr = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+const nf = (v, digits = 1) => v.toLocaleString("de-DE", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+function parseTime(str) {            // "h:mm", "h:mm:ss" oder nur Ziffern (830, 0830, 083015) -> Sekunden
+  str = str.trim();
+  let h, mi, se = 0, m;
+  if ((m = str.match(/^(\d{1,3}):(\d{1,2})(?::(\d{1,2}))?$/))) {
+    h = +m[1]; mi = +m[2]; se = +(m[3] ?? 0);
+  } else if (/^\d{1,6}$/.test(str)) {
+    if (str.length <= 2) { h = +str; mi = 0; }
+    else if (str.length <= 4) { h = +str.slice(0, -2); mi = +str.slice(-2); }
+    else { h = +str.slice(0, -4); mi = +str.slice(-4, -2); se = +str.slice(-2); }
+  } else return null;
+  return mi > 59 || se > 59 ? null : h * 3600 + mi * 60 + se;
+}
+
+function haversineKm(a, b) {
+  const rad = x => x * Math.PI / 180;
+  const q = Math.sin(rad(b.lat - a.lat) / 2) ** 2 +
+    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lon - a.lon) / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(q));
+}
+
+function setupSummary() {
+  const timed = current.rows.filter(r => r.time);
+  if (timed.length < 2) { $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); return; }
+  current.timed = timed;
+  current.t0 = timed[0].time;
+  current.t1 = timed[timed.length - 1].time;
+  $("summary").classList.remove("hidden");
+  fillSummaryDefaults();
+  runSummary();
+}
+
+function fillSummaryDefaults() {
+  const { t0, t1 } = current, total = (t1 - t0) / 1000;
+  if ($("sMode").value === "clock") {
+    $("sFrom").value = clockStr(t0); $("sTo").value = clockStr(t1);
+    $("sFrom").placeholder = $("sTo").placeholder = "hh:mm:ss";
+  } else {
+    $("sFrom").value = "0:00:00"; $("sTo").value = fmtHMS(total);
+    $("sFrom").placeholder = $("sTo").placeholder = "h:mm:ss";
+  }
+  $("sHint").textContent = `Aufzeichnung: ${clockStr(t0)} bis ${clockStr(t1)} Uhr, Dauer ${fmtHMS(total)}. ` +
+    "Doppelpunkte sind optional: 0830 = 08:30, 083015 = 08:30:15.";
+}
+
+function runSummary() {
+  if (!current || !current.timed) return;
+  const err = t => { $("sMsg").textContent = t; if (t) { $("sOut").innerHTML = ""; $("sNote").textContent = ""; } };
+  const { timed, t0, t1 } = current;
+  const total = (t1 - t0) / 1000;
+  const clock = $("sMode").value === "clock";
+  const a = parseTime($("sFrom").value), b = parseTime($("sTo").value);
+  if (a === null || b === null) return err("Bitte Von und Bis als Zeit angeben, z. B. 8:30 oder 0830 oder 1:15:00 (Doppelpunkte sind optional).");
+  if (clock && (a >= 86400 || b >= 86400)) return err("Bei einer Uhrzeit muss die Stundenangabe zwischen 0 und 23 liegen.");
+
+  let from = a, to = b;
+  if (clock) {   // Uhrzeit -> Sekunden seit Aktivitätsstart (auch über Mitternacht)
+    const sod0 = t0.getHours() * 3600 + t0.getMinutes() * 60 + t0.getSeconds();
+    const off = s => (((s - sod0) % 86400) + 86400) % 86400;
+    from = off(a); to = off(b);
+  }
+  if (to <= from) return err("„Bis“ muss nach „Von“ liegen.");
+  if (from > total + 0.5 || to > total + 0.5) {
+    return err(`Der Zeitraum liegt außerhalb der Aufzeichnung (${clockStr(t0)} bis ${clockStr(t1)} Uhr bzw. Dauer 0:00:00 bis ${fmtHMS(total)}).`);
+  }
+  const sel = timed.filter(r => { const e = (r.time - t0) / 1000; return e >= from - 0.001 && e <= to + 0.001; });
+  if (sel.length < 2) return err("In diesem Zeitraum liegen weniger als 2 Datenpunkte. Bitte einen größeren Zeitraum wählen.");
+  err("");
+  renderSummary(sel);
+}
+
+// Kalorien: aus Session-/Lap-Daten (nur FIT), für Teilzeiträume anteilig geschätzt
+function calcCalories(sel, total) {
+  const rows = current.rows, sessions = (rows.sessions || []).filter(x => x.cal !== undefined);
+  const laps = (rows.laps || []).filter(x => x.cal !== undefined);
+  if (!sessions.length && !laps.length) return null;
+  const rangeStart = sel[0].time, rangeEnd = sel[sel.length - 1].time;
+  const rangeDur = (rangeEnd - rangeStart) / 1000;
+  const sessionCal = sessions.reduce((a, x) => a + x.cal, 0);
+  const lapCal = laps.reduce((a, x) => a + x.cal, 0);
+  const whole = rangeDur >= total - 2;
+
+  if (whole) return { kcal: sessionCal || lapCal, exact: true };
+
+  const usable = laps.filter(l => l.start && (l.elapsed || l.end));
+  if (usable.length) {
+    let kcal = 0;
+    for (const l of usable) {
+      const ls = l.start, le = l.end && (!l.elapsed) ? l.end : new Date(ls.getTime() + l.elapsed * 1000);
+      const overlap = Math.min(le, rangeEnd) - Math.max(ls, rangeStart);
+      const len = le - ls;
+      if (overlap > 0 && len > 0) kcal += l.cal * overlap / len;
+    }
+    return { kcal, exact: false };
+  }
+  if (sessionCal && total > 0) return { kcal: sessionCal * rangeDur / total, exact: false };
+  return null;
+}
+
+const maxOf = a => a.reduce((m, v) => v > m ? v : m, -Infinity);
+const minOf = a => a.reduce((m, v) => v < m ? v : m, Infinity);
+
+// Berechnet alle Kennzahlen eines Zeitraums. Bei der ganzen Aktivität haben Gerätewerte Vorrang.
+function computeSummary(sel, total) {
+  const first = sel[0], last = sel[sel.length - 1];
+  const d = { from: first.time, to: last.time, dur: (last.time - first.time) / 1000, source: "calc" };
+
+  const withDist = sel.filter(r => r.dist !== undefined);
+  if (withDist.length >= 2) d.km = withDist[withDist.length - 1].dist - withDist[0].dist;
+  else {
+    const gps = sel.filter(r => r.lat !== undefined && r.lon !== undefined);
+    if (gps.length >= 2) { d.km = 0; for (let i = 1; i < gps.length; i++) d.km += haversineKm(gps[i - 1], gps[i]); }
+  }
+
+  const alts = sel.map(r => r.alt).filter(v => v !== undefined);
+  if (alts.length >= 2) {
+    let gain = 0, loss = 0, ref = alts[0];
+    for (const v of alts) {
+      const diff = v - ref;
+      if (diff >= ELEV_THRESHOLD) { gain += diff; ref = v; }
+      else if (diff <= -ELEV_THRESHOLD) { loss -= diff; ref = v; }
+    }
+    d.gain = gain; d.loss = loss; d.altMin = minOf(alts); d.altMax = maxOf(alts);
+  }
+
+  const speeds = sel.map(r => r.speed).filter(v => v !== undefined);
+  if (speeds.length) {
+    let moving = 0;
+    for (let i = 1; i < sel.length; i++) {
+      const dt = (sel[i].time - sel[i - 1].time) / 1000;
+      if (dt > 0 && dt <= 30 && (sel[i].speed ?? 0) >= 1) moving += dt;
+    }
+    d.moving = moving; d.pause = Math.max(0, d.dur - moving);
+    d.maxSpeed = maxOf(speeds);
+    if (d.km !== undefined && d.dur > 0) d.avgTotal = d.km / d.dur * 3600;
+    if (d.km !== undefined && moving > 0) d.avgMoving = d.km / moving * 3600;
+  }
+
+  const hrs = sel.map(r => r.hr).filter(v => v !== undefined);
+  if (hrs.length) { d.avgHr = avg(hrs); d.maxHr = maxOf(hrs); }
+  const pw = sel.map(r => r.power).filter(v => v !== undefined);
+  if (pw.length) { d.avgPower = avg(pw); d.maxPower = maxOf(pw); }
+  const cad = sel.map(r => r.cad).filter(v => v !== undefined && v > 0);
+  if (cad.length) d.avgCad = avg(cad);
+
+  const kc = calcCalories(sel, total);
+  if (kc && kc.kcal > 0) { d.kcal = kc.kcal; d.kcalExact = kc.exact; }
+
+  // Ganze Aktivität mit genau einer Session: Werte des Geräts bevorzugen (stimmen mit Garmin & Co. überein)
+  const ses = current.rows.sessions || [];
+  if (ses.length === 1 && d.dur >= total - 2) {
+    const x = ses[0];
+    d.source = "device";
+    if (x.distance !== undefined) d.km = x.distance / 1000;
+    if (x.ascent !== undefined) d.gain = x.ascent;
+    if (x.descent !== undefined) d.loss = x.descent;
+    if (x.timer !== undefined) {
+      d.moving = x.timer;
+      d.pause = Math.max(0, (x.elapsed !== undefined ? x.elapsed : d.dur) - x.timer);
+      if (d.km !== undefined && x.timer > 0) d.avgMoving = d.km / x.timer * 3600;
+    } else if (x.avgSpeed !== undefined && d.avgMoving === undefined) d.avgMoving = x.avgSpeed;
+    if (x.maxSpeed !== undefined) d.maxSpeed = x.maxSpeed;
+    if (x.avgHr !== undefined) d.avgHr = x.avgHr;
+    if (x.maxHr !== undefined) d.maxHr = x.maxHr;
+    if (x.avgPower !== undefined) d.avgPower = x.avgPower;
+    if (x.maxPower !== undefined) d.maxPower = x.maxPower;
+    if (x.avgCad !== undefined && x.avgCad > 0) d.avgCad = x.avgCad;
+    if (x.cal !== undefined && x.cal > 0) { d.kcal = x.cal; d.kcalExact = true; }
+  }
+  return d;
+}
+
+function renderSummary(sel) {
+  const total = (current.t1 - current.t0) / 1000;
+  const d = computeSummary(sel, total);
+  current.summaryData = d;
+
+  const cards = [];
+  cards.push(stat("Zeitraum", `${clockStr(d.from)} – ${clockStr(d.to)}`));
+  cards.push(stat("Dauer", fmtHMS(d.dur)));
+  if (d.km !== undefined) cards.push(stat("Strecke", nf(d.km, 2) + " km"));
+  if (d.gain !== undefined) {
+    cards.push(stat("Höhenmeter ↑ / ↓", `${Math.round(d.gain)} / ${Math.round(d.loss)} m`));
+    cards.push(stat("Höhe min / max", `${Math.round(d.altMin)} / ${Math.round(d.altMax)} m`));
+  }
+  if (d.moving !== undefined) {
+    cards.push(stat("Bewegungszeit", fmtHMS(d.moving)));
+    cards.push(stat("Pausen / Stillstand", fmtHMS(d.pause)));
+    if (d.avgTotal !== undefined) cards.push(stat("Ø Tempo gesamt", nf(d.avgTotal) + " km/h"));
+    if (d.avgMoving !== undefined) cards.push(stat("Ø Tempo in Bewegung", nf(d.avgMoving) + " km/h"));
+    cards.push(stat("Max. Tempo", nf(d.maxSpeed) + " km/h"));
+  }
+  if (d.avgHr !== undefined) {
+    cards.push(stat("Ø Puls", Math.round(d.avgHr) + " bpm"));
+    cards.push(stat("Max. Puls", Math.round(d.maxHr) + " bpm"));
+  }
+  if (d.avgPower !== undefined) {
+    cards.push(stat("Ø Leistung", Math.round(d.avgPower) + " W"));
+    cards.push(stat("Max. Leistung", Math.round(d.maxPower) + " W"));
+  }
+  if (d.avgCad !== undefined) cards.push(stat("Ø Kadenz", Math.round(d.avgCad) + " rpm"));
+  if (d.kcal !== undefined) cards.push(stat("Kalorien", (d.kcalExact ? "" : "≈ ") + Math.round(d.kcal).toLocaleString("de-DE") + " kcal"));
+
+  $("sOut").innerHTML = cards.join("");
+  $("sNote").textContent = (d.source === "device"
+    ? "Ganze Aktivität: Werte vorrangig aus der Gerätezusammenfassung, fehlende Werte aus den Messpunkten berechnet. "
+    : `Werte aus den Messpunkten berechnet. Höhenmeter: Auf- und Abstiege unter ${ELEV_THRESHOLD} m werden ignoriert, um Messrauschen zu filtern. Bewegungszeit zählt Zeit mit mindestens 1 km/h. `) +
+    "Ø Leistung enthält Nullwerte, Ø Kadenz nicht." +
+    (d.kcal !== undefined && !d.kcalExact ? " Kalorien: Der Wert des Geräts gilt für ganze Runden, bei Teilzeiträumen wird anteilig geschätzt (≈)." : "");
+
+  fillOverlay(d);
+}
+
+$("sBtn").addEventListener("click", runSummary);
+["sFrom", "sTo"].forEach(id => $(id).addEventListener("blur", () => {
+  const sec = parseTime($(id).value);
+  if (sec === null) return;
+  const clock = $("sMode").value === "clock";
+  if (clock && sec >= 86400) return;
+  $(id).value = clock ? `${pad2(Math.floor(sec/3600))}:${pad2(Math.floor(sec%3600/60))}:${pad2(sec%60)}` : fmtHMS(sec);
+}));
+["sFrom", "sTo"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") runSummary(); }));
+$("sMode").addEventListener("change", () => { if (current && current.timed) { fillSummaryDefaults(); runSummary(); } });
+
+// ---------- Overlay-Generator ----------
+const nfp = (v, dec = 1) => v.toLocaleString("de-DE", { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: false });
+
+const OV_FIELDS = [
+  { id: "strecke",  label: "Strecke",              unit: "km",   hero: true, sum: true, on: true, pos: "hero" },
+  { id: "anstieg",  label: "Anstieg",              unit: "Hm",   hero: true, sum: true, on: true, pos: "hero" },
+  { id: "zeit",     label: "Bewegungszeit",        unit: "",     on: true, pos: "1" },
+  { id: "pause",    label: "Pause", note: "Zusatzzeile unter der Bewegungszeit", unit: "", sub: true, on: true },
+  { id: "gesamt",   label: "Gesamtzeit",           unit: "",     on: false, pos: "3" },
+  { id: "avgSpeed", label: "Ø Geschwindigkeit",    unit: "km/h", on: true, pos: "1" },
+  { id: "maxSpeed", label: "Max. Geschwindigkeit", unit: "km/h", on: true, pos: "1" },
+  { id: "avgHr",    label: "Ø Herzfrequenz",       unit: "bpm",  on: true, pos: "2" },
+  { id: "maxHr",    label: "Max. Herzfrequenz",    unit: "bpm",  on: true, pos: "2" },
+  { id: "kcal",     label: "Kalorienverbrauch",    unit: "kcal", sum: true, on: true, pos: "2" },
+  { id: "avgPower", label: "Ø Leistung",           unit: "W",    on: false, pos: "3" },
+  { id: "maxPower", label: "Max. Leistung",        unit: "W",    on: false, pos: "3" },
+  { id: "avgCad",   label: "Ø Kadenz",             unit: "rpm",  on: false, pos: "3" },
+  { id: "altMax",   label: "Höchster Punkt",       unit: "m",    on: false, pos: "3" },
+];
+
+(function initOverlayUI() {
+  const tb = $("ovRows");
+  for (const f of OV_FIELDS) {
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      `<td>${f.label}${f.note ? ` <span class="na">(${f.note})</span>` : ""}</td>` +
+      `<td><input type="text" id="ovName_${f.id}" autocomplete="off" placeholder="${f.label}" aria-label="Eigener Name für ${f.label}"></td>` +
+      `<td><input type="text" id="ovVal_${f.id}" autocomplete="off"></td>` +
+      `<td class="unit">${f.unit}<span class="na" id="ovNa_${f.id}"></span></td>` +
+      `<td>${f.sum ? `<input type="text" id="ovSum_${f.id}" inputmode="decimal" autocomplete="off" placeholder="optional">` : ""}</td>`;
+    tb.appendChild(tr);
+    tr.querySelectorAll("input[type=text]").forEach(i => i.addEventListener("input", buildOverlay));
+  }
+})();
+
+function parseNum(str) {            // versteht 1840 / 1.840 / 1840,5 / 133.4
+  let t = String(str).trim().replace(/\s/g, "");
+  if (!t) return NaN;
+  if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+  return /^-?\d+(\.\d+)?$/.test(t) ? parseFloat(t) : NaN;
+}
+
+function overlayValues(d) {
+  const n1 = v => v === undefined ? "" : nfp(v, 1);
+  const n0 = v => v === undefined || isNaN(v) ? "" : String(Math.round(v));
+  return {
+    strecke: n1(d.km), anstieg: n0(d.gain),
+    zeit: d.moving === undefined ? "" : fmtHMS(d.moving),
+    pause: d.moving === undefined ? "" : fmtHMS(d.pause),
+    gesamt: d.dur === undefined ? "" : fmtHMS(d.dur),
+    avgSpeed: n1(d.avgMoving), maxSpeed: n1(d.maxSpeed),
+    avgHr: n0(d.avgHr), maxHr: n0(d.maxHr),
+    kcal: d.kcal > 0 ? String(Math.round(d.kcal)) : "",
+    avgPower: n0(d.avgPower), maxPower: n0(d.maxPower), avgCad: n0(d.avgCad), altMax: n0(d.altMax),
+  };
+}
+
+function fillOverlay(d) {
+  $("overlay").classList.remove("hidden");
+  const vals = overlayValues(d);
+  for (const f of OV_FIELDS) {
+    const v = vals[f.id];
+    $("ovVal_" + f.id).value = v;
+    $("ovNa_" + f.id).textContent = v === "" ? "nicht in Datei" : "";
+  }
+  $("ovInfo").textContent = d.kcal !== undefined && !d.kcalExact ? "Hinweis: Kalorien sind für diesen Zeitraum geschätzt." : "";
+  updateOvInfo();
+  buildOverlay();
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function ovBlock(kind, label, value, unit, total, sub) {
+  const wrap = el("div", kind === "hero" ? "ov-stat" : "ov-card");
+  wrap.appendChild(el("div", "ov-label", label));
+  const v = el("div", "ov-value");
+  v.appendChild(el("span", "", value));
+  if (unit) v.appendChild(el("span", "ov-unit", unit));
+  if (total) {
+    v.appendChild(el("span", "ov-div", "/"));
+    v.appendChild(el("span", "ov-total", total));
+    if (unit) v.appendChild(el("span", "ov-unit", unit));
+  }
+  wrap.appendChild(v);
+  if (sub) wrap.appendChild(el("div", "ov-sub", sub));
+  return wrap;
+}
+
+let ovError = "";   // Layout-Fehler (z. B. zu viele Hauptfelder); blockiert die Erzeugung
+
+const ovField = id => OV_FIELDS.find(f => f.id === id);
+const OV_ZONES = [["hero", "Hauptfelder (max. 3)"], ["1", "Zeile 1"], ["2", "Zeile 2"], ["3", "Zeile 3"], ["4", "Zeile 4"], ["off", "Nicht angezeigt"]];
+const zoneOf = id => document.querySelector(`.chip[data-id="${id}"]`).parentElement.dataset.zone;
+const zoneIds = z => [...$("ovZone_" + z).children].map(c => c.dataset.id);   // Reihenfolge = Reihenfolge im Overlay
+
+function buildOverlay() {
+  const get = id => {
+    const val = $("ovVal_" + id).value.trim();
+    const visible = id === "pause" ? $("ovOn_pause").checked : zoneOf(id) !== "off";
+    return { on: visible && val !== "", val, sum: $("ovSum_" + id) ? $("ovSum_" + id).value.trim() : "" };
+  };
+  const nameOf = f => $("ovName_" + f.id).value.trim() || f.label;   // eigener Name, sonst Standardname
+  const totalOf = g => {      // Summe bis Vortag + heutiger Wert
+    if (!g.sum) return "";
+    const a = parseNum(g.sum), b = parseNum(g.val);
+    if (isNaN(a) || isNaN(b)) return "";
+    return nfp(a + b, (g.val.split(",")[1] || "").length);
+  };
+  const fieldsIn = z => zoneIds(z).map(ovField).filter(f => get(f.id).on);
+
+  // Chips im Schema aktuell halten (Name, "keine Daten")
+  document.querySelectorAll("#ovLayout .chip").forEach(c => {
+    const f = ovField(c.dataset.id);
+    c.querySelector(".chip-label").textContent = nameOf(f);
+    c.classList.toggle("nodata", $("ovVal_" + f.id).value.trim() === "");
+  });
+
+  $("ovHead").textContent = $("ovTitle").value.trim();
+  $("ovHero").innerHTML = ""; $("ovGrid").innerHTML = "";
+  $("ovHero").classList.remove("ov-hero--3");
+
+  const heroes = fieldsIn("hero");
+  if (heroes.length > 3) {
+    ovError = `Zu viele Hauptfelder: Du hast ${heroes.length} Felder als „Hauptfeld“ gewählt (${heroes.map(nameOf).join(", ")}), erlaubt sind höchstens 3. ` +
+      "Das Overlay wird nicht erzeugt. Ziehe einzelne Felder in eine Zeile oder nach „Nicht angezeigt“.";
+  } else ovError = "";
+  $("ovLayoutMsg").textContent = ovError;
+  $("ovZone_hero").classList.toggle("over", !!ovError);
+  if (!$("ovExport").dataset.busy) $("ovExport").disabled = !!ovError;
+
+  if (!ovError) {
+    const pauseF = ovField("pause");
+    const block = (kind, f) => {
+      const g = get(f.id);
+      const sub = f.id === "zeit" && get("pause").on ? nameOf(pauseF) + " " + get("pause").val : "";
+      return ovBlock(kind, nameOf(f), g.val, f.unit, totalOf(g), sub);
+    };
+    heroes.forEach(f => $("ovHero").appendChild(block("hero", f)));
+    if (heroes.length === 3) $("ovHero").classList.add("ov-hero--3");
+
+    // Zeilen 1 bis 4: Felder derselben Zeile teilen sich die Breite, leere Zeilen entfallen
+    for (const n of ["1", "2", "3", "4"]) {
+      const fields = fieldsIn(n);
+      if (!fields.length) continue;
+      const row = el("div", "ov-row");
+      row.style.gridTemplateColumns = `repeat(${fields.length}, 1fr)`;
+      fields.forEach(f => row.appendChild(block("card", f)));
+      $("ovGrid").appendChild(row);
+    }
+  }
+
+  const transparent = $("ovTransparent").checked;
+  $("ovTarget").style.background = transparent ? "transparent" : "#0f1117";
+  $("ovStage").classList.toggle("checker", transparent);
+  fitOverlay();
+}
+
+// ---------- Layout-Schema: Chips, Zonen, Drag & Drop ----------
+function moveChip(chip, dir) {
+  const sib = dir < 0 ? chip.previousElementSibling : chip.nextElementSibling;
+  if (!sib) return;
+  if (dir < 0) chip.parentElement.insertBefore(chip, sib); else chip.parentElement.insertBefore(sib, chip);
+  buildOverlay();
+}
+
+function applyDefaultLayout() {
+  for (const f of OV_FIELDS.filter(f => !f.sub)) {
+    $("ovZone_" + (f.on ? f.pos : "off")).appendChild(document.querySelector(`.chip[data-id="${f.id}"]`));
+  }
+  buildOverlay();
+}
+
+function initLayout() {
+  const root = $("ovLayout");
+  for (const [z, title] of OV_ZONES) {
+    const row = el("div", "zrow");
+    row.appendChild(el("div", "ztitle", title));
+    const zone = el("div", "zone");
+    zone.id = "ovZone_" + z; zone.dataset.zone = z;
+    row.appendChild(zone); root.appendChild(row);
+  }
+  for (const f of OV_FIELDS.filter(f => !f.sub)) {
+    const chip = el("div", "chip"); chip.dataset.id = f.id;
+    const grip = el("span", "grip", "⠿"); grip.title = "Zum Verschieben ziehen";
+    chip.appendChild(grip);
+    chip.appendChild(el("span", "chip-label", f.label));
+    for (const [dir, sym, lab] of [[-1, "◀", "Nach links"], [1, "▶", "Nach rechts"]]) {
+      const b = el("button", "mv", sym);
+      b.type = "button"; b.dataset.dir = dir; b.setAttribute("aria-label", lab + " verschieben: " + f.label);
+      chip.appendChild(b);
+    }
+    $("ovZone_off").appendChild(chip);
+  }
+  root.addEventListener("click", e => {
+    const b = e.target.closest("button.mv");
+    if (b) moveChip(b.closest(".chip"), +b.dataset.dir);
+  });
+  if (typeof Sortable !== "undefined") {
+    root.querySelectorAll(".zone").forEach(z => Sortable.create(z, {
+      group: "ovlayout", animation: 150, handle: ".grip",
+      forceFallback: true, fallbackOnBody: true, fallbackTolerance: 3, fallbackClass: "chip-drag",
+      ghostClass: "chip-ghost", emptyInsertThreshold: 24,
+      onSort: buildOverlay
+    }));
+  } else {
+    $("ovDndNote").textContent = "Drag & Drop konnte nicht geladen werden (Internetverbindung prüfen). Mit ◀ ▶ kannst du Felder innerhalb einer Zeile verschieben.";
+  }
+  applyDefaultLayout();
+}
+
+function fitOverlay() {
+  const f = Math.min(1, Math.max(0.05, ($("ovWrap").clientWidth - 22) / 1920));
+  $("ovStage").style.width = Math.round(1920 * f) + "px";
+  $("ovStage").style.height = Math.round(1080 * f) + "px";
+  $("ovScaler").style.transform = `scale(${f})`;
+}
+
+function ovSize() { return $("ovRes").value.split("x").map(Number); }
+function updateOvInfo() {
+  const [w, h] = ovSize();
+  $("ovMsg").textContent = "";
+  $("ovExport").title = `Export: ${w} × ${h} px`;
+}
+
+async function exportOverlay() {
+  const msgEl = $("ovMsg"), btn = $("ovExport");
+  msgEl.textContent = "";
+  if (ovError) { msgEl.textContent = ovError; return; }
+  if (typeof html2canvas === "undefined") { msgEl.textContent = "Die Export-Bibliothek konnte nicht geladen werden (Internetverbindung prüfen)."; return; }
+  const [w, h] = ovSize();
+  const transparent = $("ovTransparent").checked;
+  btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = "Exportiere …";
+  try {
+    let canvas = await html2canvas($("ovTarget"), {
+      backgroundColor: transparent ? null : "#0f1117",
+      scale: w / 1920, width: 1920, height: 1080, useCORS: true,
+      onclone: doc => {       // im Export-Klon die Vorschau-Verkleinerung entfernen
+        doc.getElementById("ovScaler").style.transform = "none";
+        doc.getElementById("ovStage").style.width = "1920px";
+        doc.getElementById("ovStage").style.height = "1080px";
+        doc.getElementById("ovWrap").style.overflow = "visible";
+      }
+    });
+    if (canvas.width !== w || canvas.height !== h) {   // exakte Pixelgröße sicherstellen
+      const c2 = document.createElement("canvas");
+      c2.width = w; c2.height = h;
+      c2.getContext("2d").drawImage(canvas, 0, 0, w, h);
+      canvas = c2;
+    }
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    if (!blob) throw new Error("Das Bild konnte nicht erzeugt werden (evtl. zu groß für dieses Gerät). Bitte eine kleinere Auflösung wählen.");
+    const name = `zusammenfassung-${h}p.png`;
+    if (downloads) {
+      try { await downloads.save({ filename: name, data: blob }); }
+      catch (e) { if (!e || e.code !== "declined") msgEl.textContent = "Download nicht möglich: " + ((e && (e.message || e.code)) || e); }
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  } catch (e) {
+    msgEl.textContent = "Export fehlgeschlagen: " + e.message;
+  } finally {
+    delete btn.dataset.busy; btn.disabled = !!ovError; btn.textContent = "Als PNG herunterladen";
+  }
+}
+
+$("ovTitle").addEventListener("input", buildOverlay);
+$("ovOn_pause").addEventListener("change", buildOverlay);
+$("ovLayoutReset").addEventListener("click", applyDefaultLayout);
+$("ovTransparent").addEventListener("change", buildOverlay);
+$("ovRes").addEventListener("change", updateOvInfo);
+$("ovReset").addEventListener("click", () => { if (current && current.summaryData) fillOverlay(current.summaryData); });
+$("ovExport").addEventListener("click", exportOverlay);
+window.addEventListener("resize", fitOverlay);
+initLayout();
+
+async function handle(file) {
+  if (!file) return;
+  msg("Lade …");
+  try {
+    const isGpx = file.name.toLowerCase().endsWith(".gpx");
+    show(isGpx ? parseGpx(await file.text()) : parseFit(await file.arrayBuffer()), file.name);
+  } catch (e) {
+    $("stats").classList.add("hidden"); $("tablewrap").classList.add("hidden"); $("actions").classList.add("hidden"); $("range").classList.add("hidden"); $("rangeMsg").textContent = ""; $("summary").classList.add("hidden"); $("overlay").classList.add("hidden");
+    msg("Fehler: " + e.message, true);
+  }
+}
+
+$("file").addEventListener("change", e => handle(e.target.files[0]));
+const drop = $("drop");
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); handle(e.dataTransfer.files[0]); });
+</script>
+</body>
+</html>
