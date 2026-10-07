@@ -4,7 +4,7 @@ Ein kleines Browser-Tool, das **FIT- und GPX-Dateien** (Radfahren, Garmin, Wahoo
 
 Das Tool besteht aus **einer einzigen HTML-Datei** (`fit-viewer.html`). Es gibt keinen Server und kein Konto. Deine Dateien werden **nur lokal im Browser** verarbeitet und nirgendwohin hochgeladen.
 
-**Aktuelle Version:** `alpha_20261007_01` (steht auch im Footer der Seite)
+**Aktuelle Version:** `alpha_20261007_02` (steht auch im Footer der Seite) · **Lizenz:** [AGPL-3.0](LICENSE)
 
 > ## ⚠️ Hinweis: Vibe-Coding-Projekt
 > Dieses Projekt ist **„vibe-coded“**: Es wurde von einem Programmier-Anfänger gemeinsam mit einer KI (Claude von Anthropic) in einem Dialog entwickelt.
@@ -106,6 +106,10 @@ Die Version steht im Footer der Seite und in den Layout-Backups. Zu jeder Versio
 
 > Die Datumsangaben vor dem 7. Oktober 2026 wurden nachträglich zugeordnet und können um einen Tag abweichen. Versionsnummern gibt es seit `alpha_20261007_01`.
 
+### alpha_20261007_02 – 2026-10-07
+- **Lizenz:** AGPL-3.0-or-later, Lizenz-Hinweis am Anfang der HTML-Datei, LICENSE-Datei im Repository
+- Footer nennt die Lizenz
+
 ### alpha_20261007_01 – 2026-10-07
 - **Layout-Backup** für Fullscreen und Seitenleiste, jeweils getrennt:
   - Im Browser speichern und laden, beim Öffnen wird ein gespeichertes Layout automatisch geladen
@@ -181,4 +185,12 @@ Die Version steht im Footer der Seite und in den Layout-Backups. Zu jeder Versio
 
 ## Lizenz
 
-Noch nicht festgelegt.
+# Lizenz
+
+Dieses Projekt steht unter der **GNU Affero General Public License v3.0 oder neuer** (AGPL-3.0-or-later), siehe [LICENSE](LICENSE).
+
+Kurz gesagt: Du darfst das Tool nutzen, verändern und weitergeben. Wenn du eine veränderte Version weitergibst oder als Dienst im Netz anbietest, musst du sie ebenfalls unter der AGPL mit Quellcode zur Verfügung stellen. Das Tool darf also nicht verschlossen werden. Das ist keine Rechtsberatung, maßgeblich ist der Lizenztext.
+
+Die Bibliotheken SortableJS und html2canvas werden von einem CDN geladen und nicht mitgeliefert. Sie stehen unter eigenen Lizenzen (nach meinem Stand jeweils MIT, bitte auf den Projektseiten gegenprüfen).
+
+Copyright (C) 2026 der-kellermann
