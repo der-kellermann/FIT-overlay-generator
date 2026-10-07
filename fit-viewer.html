@@ -74,6 +74,9 @@
   .range label { display: flex; flex-direction: column; font-size: .8rem; color: var(--muted); gap: 4px; }
   .range input, .range select { font: inherit; width: 8.5em; padding: 7px 10px; border-radius: 8px;
     border: 1px solid var(--border); background: var(--card); color: var(--text); }
+  .range input[type=text], .range select, .range button { height: 38px; box-sizing: border-box; }   /* einheitliche Höhe */
+  .range select { width: auto; min-width: 11.5em; }                                                 /* Text nicht abschneiden */
+  .range button { padding-top: 0; padding-bottom: 0; }
   #rangeInfo { color: var(--muted); font-size: .85rem; padding-bottom: 8px; }
   .rangeMsg { margin: 0 0 10px; color: #d11a2a; font-size: .9rem; }
   .rangeMsg:empty { display: none; }
@@ -84,6 +87,29 @@
   .muted { color: var(--muted); font-size: .85rem; margin: 0 0 8px; }
   .summary .stats { margin-bottom: 8px; }
 
+
+  /* Einklappbare Bereiche */
+  details.coll { border: 1px solid var(--border); border-radius: 12px; background: var(--card); margin: 0 0 14px; }
+  details.coll > summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline;
+    padding: 10px 14px; font-weight: 600; }
+  details.coll > summary::-webkit-details-marker { display: none; }
+  details.coll > summary::before { content: "▸"; color: var(--muted); display: inline-block; width: 1em; }
+  details.coll[open] > summary::before { content: "▾"; }
+  details.coll[open] > summary .coll-line { display: none; }
+  .coll-line { font-weight: 400; font-size: .85rem; color: var(--muted); }
+  .coll-body { padding: 0 14px 12px; }
+  .coll .stats { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; margin: 6px 0; }
+  .coll .stat { background: var(--bg); padding: 5px 9px; border-radius: 8px; }
+  .coll .stat span { font-size: .7rem; }
+  .coll .stat b { font-size: .98rem; }
+  .coll .range { margin-bottom: 6px; }
+  .coll .muted, .coll .rangeMsg { margin-bottom: 4px; }
+  #panelOv #overlay, #panelVo #voCard { margin-top: 0; }
+  /* Leere Plätze im Layout-Schema (zeigen die maximale Anzahl) */
+  .slot { flex: 1 1 8em; min-width: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+    min-height: 40px; padding: 6px 8px; border: 1.5px dashed var(--border); border-radius: 8px;
+    color: var(--muted); font-size: .8rem; user-select: none; }
+  @media (max-width: 600px) { .zone .slot { flex: 1 1 100%; } }
   /* Layout-Schema (Drag & Drop) */
   .ovh { font-size: .95rem; margin: 16px 0 4px; }
   .ovlayout { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
@@ -233,12 +259,163 @@
   </aside>
   <div class="content">
     <div class="tabs" role="tablist" aria-label="Bereiche">
-      <button type="button" class="tab" role="tab" id="tabRaw" aria-controls="panelRaw" aria-selected="true">Rohdaten</button>
-      <button type="button" class="tab" role="tab" id="tabOv" aria-controls="panelOv" aria-selected="false" tabindex="-1">Fullscreen</button>
+      <button type="button" class="tab" role="tab" id="tabOv" aria-controls="panelOv" aria-selected="true">Fullscreen</button>
       <button type="button" class="tab" role="tab" id="tabVo" aria-controls="panelVo" aria-selected="false" tabindex="-1">Seitenleiste</button>
+      <button type="button" class="tab" role="tab" id="tabRaw" aria-controls="panelRaw" aria-selected="false" tabindex="-1">Rohdaten</button>
     </div>
-    <p id="emptyState" class="muted">Lade links eine FIT- oder GPX-Datei, um die Rohdaten, das Fullscreen-Overlay und die Seitenleiste zu nutzen.</p>
-    <div id="panelRaw" role="tabpanel" aria-labelledby="tabRaw">
+    <p id="emptyState" class="muted">Lade links eine FIT- oder GPX-Datei, um das Fullscreen-Overlay, die Seitenleiste und die Rohdaten zu nutzen.</p>
+    <div id="panelOv" role="tabpanel" aria-labelledby="tabOv">
+        <section id="summary" class="hidden">
+          <details class="coll" id="sColl" open>
+            <summary><span class="coll-title">Zusammenfassung eines Zeitraums</span><span class="coll-line" id="sLine"></span></summary>
+            <div class="coll-body">
+              <div class="range">
+                <label>Angabe als
+                  <select id="sMode">
+                    <option value="clock">Uhrzeit</option>
+                    <option value="dur">Zeit nach Start</option>
+                    <option value="km">Kilometermarke</option>
+                  </select>
+                </label>
+                <label>Von <input id="sFrom" type="text" inputmode="numeric" autocomplete="off"></label>
+                <label>Bis <input id="sTo" type="text" inputmode="numeric" autocomplete="off"></label>
+                <button id="sBtn" type="button">Zusammenfassen</button>
+              </div>
+              <div id="sHint" class="muted"></div>
+              <div id="sMsg" class="rangeMsg"></div>
+              <div id="sOut" class="stats"></div>
+              <div id="sNote" class="muted"></div>
+            </div>
+          </details>
+        </section>
+        <section id="overlay" class="summary hidden">
+          <h2>Fullscreen</h2>
+          <p class="muted">Overlay in voller Bildgröße, z. B. für Endcards und Instagram-Beiträge. Die Werte stammen aus der Zusammenfassung oben.</p>
+          <div id="ovWrap">
+            <div id="ovStage"><div id="ovScaler"><div id="ovTarget">
+              <div class="ov-head" id="ovHead"></div>
+              <div class="ov-hero" id="ovHero"></div>
+              <div class="ov-grid" id="ovGrid"></div>
+            </div></div></div>
+          </div>
+          <div class="btnrow">
+            <button id="ovExport" type="button">Als PNG herunterladen</button>
+            <button id="ovReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
+            <button id="ovLayoutReset" type="button" class="secondary">Layout zurücksetzen</button>
+            <span id="ovInfo" class="muted" style="margin:0"></span>
+          </div>
+          <div id="ovLayoutMsg" class="rangeMsg"></div>
+          <div id="ovMsg" class="rangeMsg"></div>
+          <h3 class="ovh">Einstellungen</h3>
+          <div class="range">
+            <label>Titel (optional) <input id="ovTitle" type="text" placeholder="z. B. Tag 3" style="width:16em" autocomplete="off"></label>
+            <label>Format
+              <select id="ovFormat">
+                <option value="16x9">16:9 (Video)</option>
+                <option value="1x1">1:1 (Instagram-Beitrag)</option>
+                <option value="9x16">9:16 (Reel / Story)</option>
+              </select>
+            </label>
+            <label>Auflösung
+              <select id="ovRes"></select>
+            </label>
+            <label class="chk"><input type="checkbox" id="ovTransparent"> Transparenter Hintergrund</label>
+          </div>
+          <h3 class="ovh">Layout</h3>
+          <p class="muted">Ziehe Felder am Griff ⠿ auf die gestrichelten Plätze oder nach „Nicht angezeigt“. Felder einer Zeile teilen sich deren Breite. Mit ◀ ▶ änderst du die Reihenfolge. Die Plätze zeigen die maximale Anzahl, jedes Format hat sein eigenes Layout.</p>
+          <div class="ovlayout" id="ovLayout"></div>
+          <label class="pauseopt"><input type="checkbox" id="ovOn_pause" checked> Pause als Zusatzzeile unter der Bewegungszeit anzeigen</label>
+          <div id="ovDndNote" class="rangeMsg"></div>
+          <h3 class="ovh">Werte und Namen</h3>
+          <p class="muted">Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, das Overlay addiert den heutigen Wert.</p>
+          <div style="overflow-x:auto">
+            <table class="ovtable">
+              <thead><tr><th>Feld</th><th>Name im Overlay</th><th>Wert</th><th>Einheit</th><th>Summe bis Vortag</th></tr></thead>
+              <tbody id="ovRows"></tbody>
+            </table>
+          </div>
+        </section>
+    </div>
+    <div id="panelVo" role="tabpanel" aria-labelledby="tabVo" hidden>
+        <div id="vo" class="hidden">
+          <details class="coll" id="voColl" open>
+            <summary><span class="coll-title">Zeitraum der Seitenleiste</span><span class="coll-line" id="voLine"></span></summary>
+            <div class="coll-body">
+              <div class="range">
+                <label>Angabe als
+                  <select id="voTimeMode">
+                    <option value="clock">Uhrzeit</option>
+                    <option value="dur">Zeit nach Start</option>
+                    <option value="km">Kilometermarke</option>
+                  </select>
+                </label>
+                <label>Von <input id="voFrom" type="text" inputmode="numeric" autocomplete="off"></label>
+                <label>Bis <input id="voTo" type="text" inputmode="numeric" autocomplete="off"></label>
+                <button id="voTimeBtn" type="button">Übernehmen</button>
+              </div>
+              <div id="voTimeHint" class="muted"></div>
+              <div id="voTimeMsg" class="rangeMsg"></div>
+              <div id="voTimeResult" class="muted"></div>
+              <div id="voOut" class="stats"></div>
+              <div id="voNote" class="muted"></div>
+            </div>
+          </details>
+          <section id="voCard" class="summary">
+            <h2>Seitenleiste</h2>
+            <p class="muted">Overlay für den linken oder rechten Rand eines Videos (1/5, 1/4 oder 1/3 breit). Es zeigt die Werte des gewählten Zeitraums. Der Export ist ein PNG in voller Bildgröße mit transparentem Hintergrund, das du im Schnittprogramm über das Video legst.</p>
+            <div id="voWrap">
+              <div id="voStage"><div id="voScaler"><div id="voTarget">
+                <div id="voPanel">
+                  <div class="vo-head" id="voHead"></div>
+                  <div class="ov-grid" id="voGrid"></div>
+                </div>
+              </div></div></div>
+            </div>
+            <div class="btnrow">
+              <button id="voExport" type="button">Als PNG herunterladen</button>
+              <button id="voReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
+              <button id="voLayoutReset" type="button" class="secondary">Layout zurücksetzen</button>
+            </div>
+            <div id="voLayoutMsg" class="rangeMsg"></div>
+            <div id="voMsg" class="rangeMsg"></div>
+            <h3 class="ovh">Einstellungen</h3>
+            <div class="range">
+              <label>Überschrift <input id="voTitle" type="text" placeholder="z. B. Highlands &amp; Steel 2026 – Tag 1" style="width:22em" autocomplete="off"></label>
+              <label>Position
+                <select id="voSide"><option value="left">Links</option><option value="right">Rechts</option></select>
+              </label>
+              <label>Breite
+                <select id="voWidth">
+                  <option value="narrow">Schmal (1/5)</option>
+                  <option value="normal" selected>Normal (1/4)</option>
+                  <option value="wide">Breit (1/3)</option>
+                </select>
+              </label>
+              <label>Auflösung (16:9)
+                <select id="voRes">
+                  <option value="1280x720">720p (1280 × 720)</option>
+                  <option value="1920x1080" selected>1080p (1920 × 1080)</option>
+                  <option value="2560x1440">1440p (2560 × 1440)</option>
+                  <option value="3840x2160">2160p (3840 × 2160)</option>
+                </select>
+              </label>
+            </div>
+            <h3 class="ovh">Layout</h3>
+            <p class="muted">Ziehe Felder am Griff ⠿ auf die gestrichelten Plätze oder nach „Nicht angezeigt“. Pro Zeile sind höchstens 2 Felder erlaubt, bei der Breite „Schmal“ nur 1. Mit ◀ ▶ änderst du die Reihenfolge.</p>
+            <div class="ovlayout" id="voLayout"></div>
+            <div id="voDndNote" class="rangeMsg"></div>
+            <h3 class="ovh">Werte und Namen</h3>
+            <p class="muted">Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, die Seitenleiste addiert den Wert des Zeitraums.</p>
+            <div style="overflow-x:auto">
+              <table class="ovtable">
+                <thead><tr><th>Feld</th><th>Name im Overlay</th><th>Wert</th><th>Einheit</th><th>Summe bis Vortag</th></tr></thead>
+                <tbody id="voRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+    </div>
+    <div id="panelRaw" role="tabpanel" aria-labelledby="tabRaw" hidden>
         <div id="actions" class="actions hidden"><button id="csvBtn" type="button">Alle Zeilen als CSV herunterladen</button></div>
         <div id="range" class="range hidden">
           <label>Von Zeile <input id="from" type="number" min="1" step="1" inputmode="numeric"></label>
@@ -258,140 +435,6 @@
         </div>
         <div id="rangeMsg" class="rangeMsg"></div>
         <div id="tablewrap" class="wrap hidden"><table id="table"></table></div>
-    </div>
-    <div id="panelOv" role="tabpanel" aria-labelledby="tabOv" hidden>
-        <section id="summary" class="summary hidden">
-          <h2>Zusammenfassung eines Zeitraums</h2>
-          <div class="range">
-            <label>Angabe als
-              <select id="sMode">
-                <option value="clock">Uhrzeit</option>
-                <option value="dur">Zeit nach Start</option>
-                <option value="km">Kilometermarke</option>
-              </select>
-            </label>
-            <label>Von <input id="sFrom" type="text" inputmode="numeric" autocomplete="off"></label>
-            <label>Bis <input id="sTo" type="text" inputmode="numeric" autocomplete="off"></label>
-            <button id="sBtn" type="button">Zusammenfassen</button>
-          </div>
-          <div id="sHint" class="muted"></div>
-          <div id="sMsg" class="rangeMsg"></div>
-          <div id="sOut" class="stats"></div>
-          <div id="sNote" class="muted"></div>
-        </section>
-        <section id="overlay" class="summary hidden">
-          <h2>Fullscreen</h2>
-          <p class="muted">Ein Overlay in voller Bildgröße, z. B. für Endcards und Instagram-Beiträge. Die Werte der Zusammenfassung oben werden automatisch übernommen. Das Layout stellst du unten im Schema ein, Werte und Namen kannst du in der Tabelle überschreiben. Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, das Overlay addiert den heutigen Wert.</p>
-          <div class="range">
-            <label>Titel (optional) <input id="ovTitle" type="text" placeholder="z. B. Tag 3" style="width:16em" autocomplete="off"></label>
-            <label>Format
-              <select id="ovFormat">
-                <option value="16x9">16:9 (Video)</option>
-                <option value="1x1">1:1 (Instagram-Beitrag)</option>
-                <option value="9x16">9:16 (Reel / Story)</option>
-              </select>
-            </label>
-            <label>Auflösung
-              <select id="ovRes"></select>
-            </label>
-            <label class="chk"><input type="checkbox" id="ovTransparent"> Transparenter Hintergrund</label>
-          </div>
-          <h3 class="ovh">Layout</h3>
-          <p class="muted">Ziehe ein Feld am Griff ⠿ in eine Zeile oder nach „Nicht angezeigt“. Felder in derselben Zeile teilen sich deren Breite, ein einzelnes Feld füllt die ganze Zeile. Mit ◀ ▶ änderst du die Reihenfolge innerhalb einer Zeile. Es sind höchstens 3 Hauptfelder erlaubt. Jedes Format merkt sich sein eigenes Layout, solange die Seite geöffnet ist.</p>
-          <div class="ovlayout" id="ovLayout"></div>
-          <label class="pauseopt"><input type="checkbox" id="ovOn_pause" checked> Pause als Zusatzzeile unter der Bewegungszeit anzeigen</label>
-          <div id="ovDndNote" class="rangeMsg"></div>
-          <h3 class="ovh">Werte und Namen</h3>
-          <div style="overflow-x:auto">
-            <table class="ovtable">
-              <thead><tr><th>Feld</th><th>Name im Overlay</th><th>Wert</th><th>Einheit</th><th>Summe bis Vortag</th></tr></thead>
-              <tbody id="ovRows"></tbody>
-            </table>
-          </div>
-          <div class="btnrow">
-            <button id="ovExport" type="button">Als PNG herunterladen</button>
-            <button id="ovReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
-            <button id="ovLayoutReset" type="button" class="secondary">Layout zurücksetzen</button>
-            <span id="ovInfo" class="muted" style="margin:0"></span>
-          </div>
-          <div id="ovLayoutMsg" class="rangeMsg"></div>
-          <div id="ovMsg" class="rangeMsg"></div>
-          <div id="ovWrap">
-            <div id="ovStage"><div id="ovScaler"><div id="ovTarget">
-              <div class="ov-head" id="ovHead"></div>
-              <div class="ov-hero" id="ovHero"></div>
-              <div class="ov-grid" id="ovGrid"></div>
-            </div></div></div>
-          </div>
-        </section>
-    </div>
-    <div id="panelVo" role="tabpanel" aria-labelledby="tabVo" hidden>
-        <section id="vo" class="summary hidden">
-          <h2>Seitenleiste</h2>
-          <p class="muted">Die Seitenleiste ist ein Overlay für den linken oder rechten Rand eines Videos, wahlweise ein Fünftel, ein Viertel oder ein Drittel breit. Es zeigt die Werte vom Start der Aktivität bis zu einem gewählten Zeitpunkt. Der Export ist zunächst ein Standbild: ein PNG in voller Bildgröße mit transparentem Hintergrund, das du in deinem Schnittprogramm über das Video legst.</p>
-          <div class="range">
-            <label>Überschrift <input id="voTitle" type="text" placeholder="z. B. Highlands &amp; Steel 2026 – Tag 1" style="width:22em" autocomplete="off"></label>
-            <label>Position
-              <select id="voSide"><option value="left">Links</option><option value="right">Rechts</option></select>
-            </label>
-            <label>Breite
-              <select id="voWidth">
-                <option value="narrow">Schmal (1/5)</option>
-                <option value="normal" selected>Normal (1/4)</option>
-                <option value="wide">Breit (1/3)</option>
-              </select>
-            </label>
-            <label>Auflösung (16:9)
-              <select id="voRes">
-                <option value="1280x720">720p (1280 × 720)</option>
-                <option value="1920x1080" selected>1080p (1920 × 1080)</option>
-                <option value="2560x1440">1440p (2560 × 1440)</option>
-                <option value="3840x2160">2160p (3840 × 2160)</option>
-              </select>
-            </label>
-          </div>
-          <h3 class="ovh">Zeitpunkt</h3>
-          <p class="muted">Bis zu welchem Punkt der Aktivität sollen die Werte gelten? Gezählt wird immer ab dem Start.</p>
-          <div class="range">
-            <label>Angabe als
-              <select id="voTimeMode">
-                <option value="clock">Uhrzeit</option>
-                <option value="dur" selected>Zeit nach Start</option>
-                <option value="km">Kilometermarke</option>
-              </select>
-            </label>
-            <label><span id="voTimeLabel">Zeit nach Start</span> <input id="voTimeVal" type="text" autocomplete="off"></label>
-            <button id="voTimeBtn" type="button">Übernehmen</button>
-          </div>
-          <div id="voTimeHint" class="muted"></div>
-          <div id="voTimeMsg" class="rangeMsg"></div>
-          <h3 class="ovh">Layout</h3>
-          <p class="muted">Ziehe ein Feld am Griff ⠿ in eine Zeile oder nach „Nicht angezeigt“. Pro Zeile sind höchstens 2 Felder nebeneinander erlaubt, bei der Breite „Schmal“ nur 1. Mit ◀ ▶ änderst du die Reihenfolge innerhalb einer Zeile.</p>
-          <div class="ovlayout" id="voLayout"></div>
-          <div id="voDndNote" class="rangeMsg"></div>
-          <h3 class="ovh">Werte und Namen</h3>
-          <div style="overflow-x:auto">
-            <table class="ovtable">
-              <thead><tr><th>Feld</th><th>Name im Overlay</th><th>Wert</th><th>Einheit</th><th>Summe bis Vortag</th></tr></thead>
-              <tbody id="voRows"></tbody>
-            </table>
-          </div>
-          <div class="btnrow">
-            <button id="voExport" type="button">Als PNG herunterladen</button>
-            <button id="voReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
-            <button id="voLayoutReset" type="button" class="secondary">Layout zurücksetzen</button>
-          </div>
-          <div id="voLayoutMsg" class="rangeMsg"></div>
-          <div id="voMsg" class="rangeMsg"></div>
-          <div id="voWrap">
-            <div id="voStage"><div id="voScaler"><div id="voTarget">
-              <div id="voPanel">
-                <div class="vo-head" id="voHead"></div>
-                <div class="ov-grid" id="voGrid"></div>
-              </div>
-            </div></div></div>
-          </div>
-        </section>
     </div>
   </div>
 </main>
@@ -764,64 +807,94 @@ function setupSummary() {
   voSetup();
 }
 
-function fillSummaryDefaults() {
-  const { t0, t1 } = current, total = (t1 - t0) / 1000, mode = $("sMode").value;
-  $("sFrom").inputMode = $("sTo").inputMode = mode === "km" ? "decimal" : "numeric";
-  if (mode === "clock") {
-    $("sFrom").value = clockStr(t0); $("sTo").value = clockStr(t1);
-    $("sFrom").placeholder = $("sTo").placeholder = "hh:mm:ss";
-  } else if (mode === "km") {
-    const cum = voCum(), maxK = cum ? cum[cum.length - 1] : undefined;
-    $("sFrom").value = cum ? "0" : ""; $("sTo").value = cum ? nf(maxK, 2) : "";
-    $("sFrom").placeholder = $("sTo").placeholder = "km";
-  } else {
-    $("sFrom").value = "0:00:00"; $("sTo").value = fmtHMS(total);
-    $("sFrom").placeholder = $("sTo").placeholder = "h:mm:ss";
+// ----- Zeitraum-Auswahl (gemeinsam für Fullscreen und Seitenleiste, aber mit getrenntem Zustand) -----
+function rangeDefaults(mode) {
+  const { t0, t1 } = current, total = (t1 - t0) / 1000;
+  if (mode === "clock") return { from: clockStr(t0), to: clockStr(t1), ph: "hh:mm:ss", im: "numeric" };
+  if (mode === "km") {
+    const cum = voCum();
+    return { from: cum ? "0" : "", to: cum ? nf(cum[cum.length - 1], 2) : "", ph: "km", im: "decimal" };
   }
-  $("sHint").textContent = `Aufzeichnung: ${clockStr(t0)} bis ${clockStr(t1)} Uhr, Dauer ${fmtHMS(total)}` +
-    (voCum() ? `, Strecke ${nf(voCum()[voCum().length - 1], 2)} km. ` : ". ") +
+  return { from: "0:00:00", to: fmtHMS(total), ph: "h:mm:ss", im: "numeric" };
+}
+
+function rangeHint(mode) {
+  const { t0, t1 } = current, total = (t1 - t0) / 1000, cum = voCum();
+  return `Aufzeichnung: ${clockStr(t0)} bis ${clockStr(t1)} Uhr, Dauer ${fmtHMS(total)}` +
+    (cum ? `, Strecke ${nf(cum[cum.length - 1], 2)} km. ` : ". ") +
     (mode === "km" ? "Kilometer als Zahl, z. B. 0 und 20,15." : "Doppelpunkte sind optional: 0830 = 08:30, 083015 = 08:30:15.");
+}
+
+function applyRangeDefaults(mode, fromEl, toEl, hintEl) {
+  const d = rangeDefaults(mode);
+  fromEl.value = d.from; toEl.value = d.to;
+  fromEl.placeholder = toEl.placeholder = d.ph;
+  fromEl.inputMode = toEl.inputMode = d.im;
+  hintEl.textContent = rangeHint(mode);
+}
+
+function formatTimeField(inputEl, mode) {      // Eingaben wie 0830 beim Verlassen des Feldes sauber formatieren
+  if (mode === "km") return;
+  const sec = parseTime(inputEl.value);
+  if (sec === null) return;
+  const clock = mode === "clock";
+  if (clock && sec >= 86400) return;
+  inputEl.value = clock ? `${pad2(Math.floor(sec / 3600))}:${pad2(Math.floor(sec % 3600 / 60))}:${pad2(sec % 60)}` : fmtHMS(sec);
+}
+
+// Liefert { sel } (gewählte Messpunkte), { zero: true } (nur Startpunkt, wenn erlaubt) oder { error }
+function resolveRange(mode, fromRaw, toRaw, allowZero) {
+  const { timed, t0, t1 } = current, total = (t1 - t0) / 1000;
+  let sel, atStart = false;
+
+  if (mode === "km") {
+    const a = parseNum(fromRaw), b = parseNum(toRaw);
+    if (isNaN(a) || isNaN(b) || a < 0 || b < 0) return { error: "Bitte Von und Bis als Kilometer angeben, z. B. 0 und 20,15." };
+    if (b < a || (b === a && !(allowZero && a === 0))) return { error: "„Bis“ muss größer als „Von“ sein." };
+    const cum = voCum();
+    if (!cum) return { error: "Diese Datei enthält weder Strecken- noch Positionsdaten, deshalb ist keine Kilometerangabe möglich." };
+    const maxK = cum[cum.length - 1];
+    if (a > maxK + 0.05 || b > maxK + 0.05) return { error: `Die Aktivität ist nur ${nf(maxK, 2)} km lang.` };
+    let i0 = cum.findIndex(v => v >= a - 1e-9); if (i0 < 0) i0 = cum.length - 1;
+    let i1 = cum.findIndex(v => v >= b - 1e-9); if (i1 < 0) i1 = cum.length - 1;
+    sel = timed.slice(i0, i1 + 1);
+    atStart = i0 === 0;
+  } else {
+    const clock = mode === "clock";
+    const a = parseTime(fromRaw), b = parseTime(toRaw);
+    if (a === null || b === null) return { error: "Bitte Von und Bis als Zeit angeben, z. B. 8:30 oder 0830 oder 1:15:00 (Doppelpunkte sind optional)." };
+    if (clock && (a >= 86400 || b >= 86400)) return { error: "Bei einer Uhrzeit muss die Stundenangabe zwischen 0 und 23 liegen." };
+    let from = a, to = b;
+    if (clock) {   // Uhrzeit -> Sekunden seit Aktivitätsstart (auch über Mitternacht)
+      const sod0 = t0.getHours() * 3600 + t0.getMinutes() * 60 + t0.getSeconds();
+      const off = x => (((x - sod0) % 86400) + 86400) % 86400;
+      from = off(a); to = off(b);
+    }
+    if (to < from || (to === from && !(allowZero && from === 0))) return { error: "„Bis“ muss nach „Von“ liegen." };
+    if (from > total + 0.5 || to > total + 0.5) {
+      return { error: `Der Zeitraum liegt außerhalb der Aufzeichnung (${clockStr(t0)} bis ${clockStr(t1)} Uhr bzw. Dauer 0:00:00 bis ${fmtHMS(total)}).` };
+    }
+    sel = timed.filter(r => { const e = (r.time - t0) / 1000; return e >= from - 0.001 && e <= to + 0.001; });
+    atStart = from <= 0.001;
+  }
+  if (sel.length < 2) {
+    if (allowZero && atStart) return { zero: true };
+    return { error: "In diesem Zeitraum liegen weniger als 2 Datenpunkte. Bitte einen größeren Zeitraum wählen." };
+  }
+  return { sel };
+}
+
+function fillSummaryDefaults() {
+  applyRangeDefaults($("sMode").value, $("sFrom"), $("sTo"), $("sHint"));
 }
 
 function runSummary() {
   if (!current || !current.timed) return;
-  const err = t => { $("sMsg").textContent = t; if (t) { $("sOut").innerHTML = ""; $("sNote").textContent = ""; } };
-  const { timed, t0, t1 } = current;
-  const total = (t1 - t0) / 1000;
-  const mode = $("sMode").value;
-  let sel;
-
-  if (mode === "km") {
-    const a = parseNum($("sFrom").value), b = parseNum($("sTo").value);
-    if (isNaN(a) || isNaN(b) || a < 0 || b < 0) return err("Bitte Von und Bis als Kilometer angeben, z. B. 0 und 20,15.");
-    if (b <= a) return err("„Bis“ muss größer als „Von“ sein.");
-    const cum = voCum();
-    if (!cum) return err("Diese Datei enthält weder Strecken- noch Positionsdaten, deshalb ist keine Kilometerangabe möglich.");
-    const maxK = cum[cum.length - 1];
-    if (a > maxK + 0.05 || b > maxK + 0.05) return err(`Die Aktivität ist nur ${nf(maxK, 2)} km lang.`);
-    let i0 = cum.findIndex(v => v >= a - 1e-9); if (i0 < 0) i0 = cum.length - 1;
-    let i1 = cum.findIndex(v => v >= b - 1e-9); if (i1 < 0) i1 = cum.length - 1;
-    sel = timed.slice(i0, i1 + 1);
-  } else {
-    const clock = mode === "clock";
-    const a = parseTime($("sFrom").value), b = parseTime($("sTo").value);
-    if (a === null || b === null) return err("Bitte Von und Bis als Zeit angeben, z. B. 8:30 oder 0830 oder 1:15:00 (Doppelpunkte sind optional).");
-    if (clock && (a >= 86400 || b >= 86400)) return err("Bei einer Uhrzeit muss die Stundenangabe zwischen 0 und 23 liegen.");
-    let from = a, to = b;
-    if (clock) {   // Uhrzeit -> Sekunden seit Aktivitätsstart (auch über Mitternacht)
-      const sod0 = t0.getHours() * 3600 + t0.getMinutes() * 60 + t0.getSeconds();
-      const off = s => (((s - sod0) % 86400) + 86400) % 86400;
-      from = off(a); to = off(b);
-    }
-    if (to <= from) return err("„Bis“ muss nach „Von“ liegen.");
-    if (from > total + 0.5 || to > total + 0.5) {
-      return err(`Der Zeitraum liegt außerhalb der Aufzeichnung (${clockStr(t0)} bis ${clockStr(t1)} Uhr bzw. Dauer 0:00:00 bis ${fmtHMS(total)}).`);
-    }
-    sel = timed.filter(r => { const e = (r.time - t0) / 1000; return e >= from - 0.001 && e <= to + 0.001; });
-  }
-  if (sel.length < 2) return err("In diesem Zeitraum liegen weniger als 2 Datenpunkte. Bitte einen größeren Zeitraum wählen.");
+  const err = t => { $("sMsg").textContent = t; if (t) { $("sOut").innerHTML = ""; $("sNote").textContent = ""; $("sLine").textContent = "Eingabe prüfen"; } };
+  const r = resolveRange($("sMode").value, $("sFrom").value, $("sTo").value, false);
+  if (r.error) return err(r.error);
   err("");
-  renderSummary(sel);
+  renderSummary(r.sel);
 }
 
 // Kalorien: aus Session-/Lap-Daten (nur FIT), für Teilzeiträume anteilig geschätzt
@@ -925,11 +998,7 @@ function computeSummary(sel, total) {
   return d;
 }
 
-function renderSummary(sel) {
-  const total = (current.t1 - current.t0) / 1000;
-  const d = computeSummary(sel, total);
-  current.summaryData = d;
-
+function summaryCards(d) {
   const cards = [];
   cards.push(stat("Zeitraum", `${clockStr(d.from)} – ${clockStr(d.to)}`));
   cards.push(stat("Dauer", fmtHMS(d.dur)));
@@ -956,25 +1025,29 @@ function renderSummary(sel) {
   if (d.avgCad !== undefined) cards.push(stat("Ø Kadenz", Math.round(d.avgCad) + " rpm"));
   if (d.kcal !== undefined) cards.push(stat("Kalorien", (d.kcalExact ? "" : "≈ ") + Math.round(d.kcal).toLocaleString("de-DE") + " kcal"));
 
-  $("sOut").innerHTML = cards.join("");
-  $("sNote").textContent = (d.source === "device"
+  return cards.join("");
+}
+
+function summaryNote(d) {
+  return (d.source === "device"
     ? "Ganze Aktivität: Werte vorrangig aus der Gerätezusammenfassung, fehlende Werte aus den Messpunkten berechnet. "
     : `Werte aus den Messpunkten berechnet. Höhenmeter: Auf- und Abstiege unter ${ELEV_THRESHOLD} m werden ignoriert, um Messrauschen zu filtern. Bewegungszeit zählt Zeit mit mindestens 1 km/h. `) +
     "Ø Leistung enthält Nullwerte, Ø Kadenz nicht." +
     (d.kcal !== undefined && !d.kcalExact ? " Kalorien: Der Wert des Geräts gilt für ganze Runden, bei Teilzeiträumen wird anteilig geschätzt (≈)." : "");
+}
 
+function renderSummary(sel) {
+  const total = (current.t1 - current.t0) / 1000;
+  const d = computeSummary(sel, total);
+  current.summaryData = d;
+  $("sOut").innerHTML = summaryCards(d);
+  $("sLine").textContent = `${clockStr(d.from)} – ${clockStr(d.to)} Uhr · ${fmtHMS(d.dur)}` + (d.km !== undefined ? ` · ${nf(d.km, 2)} km` : "");
+  $("sNote").textContent = summaryNote(d);
   fillOverlay(d);
 }
 
 $("sBtn").addEventListener("click", runSummary);
-["sFrom", "sTo"].forEach(id => $(id).addEventListener("blur", () => {
-  if ($("sMode").value === "km") return;
-  const sec = parseTime($(id).value);
-  if (sec === null) return;
-  const clock = $("sMode").value === "clock";
-  if (clock && sec >= 86400) return;
-  $(id).value = clock ? `${pad2(Math.floor(sec/3600))}:${pad2(Math.floor(sec%3600/60))}:${pad2(sec%60)}` : fmtHMS(sec);
-}));
+["sFrom", "sTo"].forEach(id => $(id).addEventListener("blur", () => formatTimeField($(id), $("sMode").value)));
 ["sFrom", "sTo"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") runSummary(); }));
 $("sMode").addEventListener("change", () => { if (current && current.timed) { fillSummaryDefaults(); runSummary(); } });
 
@@ -1074,6 +1147,22 @@ function ovBlock(kind, label, value, unit, total, sub) {
 
 let ovError = "";   // Layout-Fehler (z. B. zu viele Hauptfelder); blockiert die Erzeugung
 
+// Leere, gestrichelte Plätze in jeder Zeile des Schemas: zeigen, wie viele Felder dort maximal möglich sind
+function refreshSlots(layoutId, capacityOf) {
+  document.querySelectorAll(`#${layoutId} .zone`).forEach(zone => {
+    [...zone.children].filter(c => c.classList.contains("slot")).forEach(c => c.remove());
+    const z = zone.dataset.zone;
+    if (z === "off") return;
+    const n = [...zone.children].filter(c => c.classList.contains("chip")).length;
+    for (let i = n; i < capacityOf(z); i++) zone.appendChild(el("div", "slot", `${z === "hero" ? "Hauptfeld" : "Feld"} ${i + 1} (leer)`));
+  });
+}
+
+const OV_HERO_MAX = 3;
+const OV_ROW_MAX = { "16x9": 3, "1x1": 3, "9x16": 2 };      // Felder pro Zeile je Format
+const OV_FORMAT_NAMES = { "16x9": "16:9", "1x1": "1:1", "9x16": "9:16" };
+const ovCapacity = z => z === "hero" ? OV_HERO_MAX : OV_ROW_MAX[ovFormat];
+
 const ovField = id => OV_FIELDS.find(f => f.id === id);
 
 // Formate: Entwurfsgröße des Overlays (in CSS-Pixeln) und wählbare Export-Auflösungen
@@ -1096,7 +1185,7 @@ const OV_LAYOUT_DEFAULTS = {
 const ovLayouts = {};   // gemerkte Layouts je Format
 const OV_ZONES = [["hero", "Hauptfelder (max. 3)"], ["1", "Zeile 1"], ["2", "Zeile 2"], ["3", "Zeile 3"], ["4", "Zeile 4"], ["off", "Nicht angezeigt"]];
 const zoneOf = id => document.querySelector(`#ovLayout .chip[data-id="${id}"]`).parentElement.dataset.zone;
-const zoneIds = z => [...$("ovZone_" + z).children].map(c => c.dataset.id);   // Reihenfolge = Reihenfolge im Overlay
+const zoneIds = z => [...$("ovZone_" + z).children].filter(c => c.classList.contains("chip")).map(c => c.dataset.id);   // Reihenfolge = Reihenfolge im Overlay
 
 function buildOverlay() {
   const get = id => {
@@ -1125,12 +1214,26 @@ function buildOverlay() {
   $("ovHero").classList.remove("ov-hero--3");
 
   const heroes = fieldsIn("hero");
-  if (heroes.length > 3) {
-    ovError = `Zu viele Hauptfelder: Du hast ${heroes.length} Felder als „Hauptfeld“ gewählt (${heroes.map(nameOf).join(", ")}), erlaubt sind höchstens 3. ` +
+  ovError = "";
+  if (heroes.length > OV_HERO_MAX) {
+    ovError = `Zu viele Hauptfelder: Du hast ${heroes.length} Felder als „Hauptfeld“ gewählt (${heroes.map(nameOf).join(", ")}), erlaubt sind höchstens ${OV_HERO_MAX}. ` +
       "Das Overlay wird nicht erzeugt. Ziehe einzelne Felder in eine Zeile oder nach „Nicht angezeigt“.";
-  } else ovError = "";
+  } else {
+    for (const n of ["1", "2", "3", "4"]) {
+      const fs = fieldsIn(n);
+      if (fs.length > OV_ROW_MAX[ovFormat]) {
+        ovError = `Zu viele Felder nebeneinander: In Zeile ${n} stehen ${fs.length} Felder (${fs.map(nameOf).join(", ")}). Im Format ${OV_FORMAT_NAMES[ovFormat]} sind höchstens ${OV_ROW_MAX[ovFormat]} pro Zeile erlaubt. ` +
+          "Das Overlay wird nicht erzeugt. Verschiebe ein Feld in eine andere Zeile oder nach „Nicht angezeigt“.";
+        break;
+      }
+    }
+  }
   $("ovLayoutMsg").textContent = ovError;
-  $("ovZone_hero").classList.toggle("over", !!ovError);
+  document.querySelectorAll("#ovLayout .zone").forEach(z => {
+    const zz = z.dataset.zone;
+    z.classList.toggle("over", zz !== "off" && fieldsIn(zz).length > ovCapacity(zz));
+  });
+  refreshSlots("ovLayout", ovCapacity);
   if (!$("ovExport").dataset.busy) $("ovExport").disabled = !!ovError;
 
   if (!ovError) {
@@ -1165,7 +1268,7 @@ function buildOverlay() {
 // ---------- Layout-Schema: Chips, Zonen, Drag & Drop ----------
 function moveChip(chip, dir) {
   const sib = dir < 0 ? chip.previousElementSibling : chip.nextElementSibling;
-  if (!sib) return;
+  if (!sib || !sib.classList.contains("chip")) return;
   if (dir < 0) chip.parentElement.insertBefore(chip, sib); else chip.parentElement.insertBefore(sib, chip);
   buildOverlay();
 }
@@ -1242,7 +1345,7 @@ function initLayout() {
   });
   if (typeof Sortable !== "undefined") {
     root.querySelectorAll(".zone").forEach(z => Sortable.create(z, {
-      group: "ovlayout", animation: 150, handle: ".grip",
+      group: "ovlayout", animation: 150, handle: ".grip", draggable: ".chip",
       forceFallback: true, fallbackOnBody: true, fallbackTolerance: 3, fallbackClass: "chip-drag",
       ghostClass: "chip-ghost", emptyInsertThreshold: 24,
       onSort: buildOverlay
@@ -1360,7 +1463,7 @@ let voError = "";
 const voField = id => VO_FIELDS.find(f => f.id === id);
 const voChip = id => document.querySelector(`#voLayout .chip[data-id="${id}"]`);
 const voZoneOf = id => voChip(id).parentElement.dataset.zone;
-const voZoneIds = z => [...$("voZone_" + z).children].map(c => c.dataset.id);
+const voZoneIds = z => [...$("voZone_" + z).children].filter(c => c.classList.contains("chip")).map(c => c.dataset.id);
 
 (function initVoTable() {
   const tb = $("voRows");
@@ -1447,6 +1550,7 @@ function voBuild() {
     }
   }
   $("voLayoutMsg").textContent = voError;
+  refreshSlots("voLayout", () => voMaxPerRow());
   document.querySelectorAll("#voLayout .zone").forEach(z => {
     z.classList.toggle("over", !!voError && z.dataset.zone !== "off" && fieldsIn(z.dataset.zone).length > voMaxPerRow());
   });
@@ -1520,13 +1624,13 @@ function voInitLayout() {
     if (!b) return;
     const chip = b.closest(".chip"), dir = +b.dataset.dir;
     const sib = dir < 0 ? chip.previousElementSibling : chip.nextElementSibling;
-    if (!sib) return;
+    if (!sib || !sib.classList.contains("chip")) return;
     if (dir < 0) chip.parentElement.insertBefore(chip, sib); else chip.parentElement.insertBefore(sib, chip);
     voBuild();
   });
   if (typeof Sortable !== "undefined") {
     root.querySelectorAll(".zone").forEach(z => Sortable.create(z, {
-      group: "volayout", animation: 150, handle: ".grip",
+      group: "volayout", animation: 150, handle: ".grip", draggable: ".chip",
       forceFallback: true, fallbackOnBody: true, fallbackTolerance: 3, fallbackClass: "chip-drag",
       ghostClass: "chip-ghost", emptyInsertThreshold: 24,
       onSort: voBuild
@@ -1556,63 +1660,37 @@ function voCum() {            // Strecke (km) bis zu jedem Messpunkt, für die K
   return cum;
 }
 
-function voModeUi() {
-  const mode = $("voTimeMode").value;
-  $("voTimeLabel").textContent = mode === "clock" ? "Uhrzeit (hh:mm:ss)" : mode === "km" ? "Kilometer" : "Zeit (h:mm:ss)";
-  $("voTimeVal").inputMode = mode === "km" ? "decimal" : "numeric";
-}
-
-function voFillTimeDefault() {       // Standard: Ende der Aktivität
-  const { t0, t1 } = current, total = (t1 - t0) / 1000, mode = $("voTimeMode").value;
-  if (mode === "clock") $("voTimeVal").value = clockStr(t1);
-  else if (mode === "km") { const c = voCum(); $("voTimeVal").value = c ? nf(c[c.length - 1], 2) : ""; }
-  else $("voTimeVal").value = fmtHMS(total);
+function voFillTimeDefault() {       // Standard: ganze Aktivität (0 bis Ende)
+  applyRangeDefaults($("voTimeMode").value, $("voFrom"), $("voTo"), $("voTimeHint"));
 }
 
 function voRun() {
   if (!current || !current.timed) return;
-  const err = t => { $("voTimeMsg").textContent = t; };
-  const { timed, t0, t1 } = current, total = (t1 - t0) / 1000;
-  const mode = $("voTimeMode").value, raw = $("voTimeVal").value;
-  let sel;
-
-  if (mode === "km") {
-    const K = parseNum(raw);
-    if (isNaN(K) || K < 0) return err("Bitte eine Kilometermarke als Zahl angeben, z. B. 20,15 (oder 0 für den Start).");
-    const cum = voCum();
-    if (!cum) return err("Diese Datei enthält weder Strecken- noch Positionsdaten, deshalb ist keine Kilometermarke möglich.");
-    const maxK = cum[cum.length - 1];
-    if (K > maxK + 0.05) return err(`Die Aktivität ist nur ${nf(maxK, 2)} km lang.`);
-    let i = cum.findIndex(v => v >= K - 1e-9);
-    if (i < 0) i = cum.length - 1;
-    sel = timed.slice(0, i + 1);
-  } else {
-    const a = parseTime(raw);
-    if (a === null) return err("Bitte eine Zeit angeben, z. B. 1:15:00 oder 011500 (Doppelpunkte sind optional).");
-    let T = a;
-    if (mode === "clock") {
-      if (a >= 86400) return err("Bei einer Uhrzeit muss die Stundenangabe zwischen 0 und 23 liegen.");
-      const sod0 = t0.getHours() * 3600 + t0.getMinutes() * 60 + t0.getSeconds();
-      T = (((a - sod0) % 86400) + 86400) % 86400;
-    }
-    if (T > total + 0.5) return err(`Der Zeitpunkt liegt außerhalb der Aufzeichnung (${clockStr(t0)} bis ${clockStr(t1)} Uhr bzw. Dauer 0:00:00 bis ${fmtHMS(total)}).`);
-    sel = timed.filter(r => (r.time - t0) / 1000 <= T + 0.001);
-  }
+  const err = t => { $("voTimeMsg").textContent = t; if (t) { $("voLine").textContent = "Eingabe prüfen"; $("voTimeResult").textContent = ""; $("voOut").innerHTML = ""; $("voNote").textContent = ""; } };
+  const { t0, t1 } = current, total = (t1 - t0) / 1000;
+  const r = resolveRange($("voTimeMode").value, $("voFrom").value, $("voTo").value, true);
+  if (r.error) return err(r.error);
   err("");
-  if (sel.length < 2) {              // Start der Aktivität: noch nichts gefahren
-    $("voTimeHint").textContent = `Gewählter Punkt: Start der Aktivität (${clockStr(t0)} Uhr, 0:00:00 nach Start, 0,00 km). Alle Werte stehen auf 0, die Herzfrequenz auf „-“.`;
+
+  if (r.zero) {                      // Start der Aktivität: noch nichts gefahren
+    $("voTimeResult").textContent = `Gewählter Zeitraum: Start der Aktivität (${clockStr(t0)} Uhr, 0:00:00, 0,00 km). Alle Werte stehen auf 0, die Herzfrequenz auf „-“.`;
+    $("voLine").textContent = "Start der Aktivität";
+    $("voOut").innerHTML = ""; $("voNote").textContent = "";
     voFillZero();
     return;
   }
 
-  const d = computeSummary(sel, total);
-  $("voTimeHint").textContent = `Gewählter Punkt: ${clockStr(d.to)} Uhr, ${fmtHMS(d.dur)} nach Start` + (d.km !== undefined ? `, ${nf(d.km, 2)} km` : "") + ".";
+  const d = computeSummary(r.sel, total);
+  current.voData = d;
+  $("voTimeResult").textContent = "";
+  $("voOut").innerHTML = summaryCards(d);
+  $("voNote").textContent = summaryNote(d);
+  $("voLine").textContent = `${clockStr(d.from)} – ${clockStr(d.to)} Uhr · ${fmtHMS(d.dur)}` + (d.km !== undefined ? ` · ${nf(d.km, 2)} km` : "");
   voFill(d);
 }
 
 function voSetup() {
   $("vo").classList.remove("hidden");
-  voModeUi();
   voFillTimeDefault();
   voRun();
 }
@@ -1659,16 +1737,11 @@ $("voTitle").addEventListener("input", voBuild);
 $("voSide").addEventListener("change", voBuild);
 $("voWidth").addEventListener("change", voBuild);
 $("voTimeBtn").addEventListener("click", voRun);
-$("voTimeVal").addEventListener("keydown", e => { if (e.key === "Enter") voRun(); });
-$("voTimeVal").addEventListener("blur", () => {
-  if ($("voTimeMode").value === "km") return;
-  const sec = parseTime($("voTimeVal").value);
-  if (sec === null) return;
-  const clock = $("voTimeMode").value === "clock";
-  if (clock && sec >= 86400) return;
-  $("voTimeVal").value = clock ? `${pad2(Math.floor(sec / 3600))}:${pad2(Math.floor(sec % 3600 / 60))}:${pad2(sec % 60)}` : fmtHMS(sec);
+["voFrom", "voTo"].forEach(id => {
+  $(id).addEventListener("keydown", e => { if (e.key === "Enter") voRun(); });
+  $(id).addEventListener("blur", () => formatTimeField($(id), $("voTimeMode").value));
 });
-$("voTimeMode").addEventListener("change", () => { voModeUi(); if (current && current.timed) { voFillTimeDefault(); voRun(); } });
+$("voTimeMode").addEventListener("change", () => { if (current && current.timed) { voFillTimeDefault(); voRun(); } });
 $("voReset").addEventListener("click", () => { if (current && current.voVals) voApplyValues(current.voVals); });
 $("voLayoutReset").addEventListener("click", () => voCaptureApply(VO_DEFAULT_LAYOUT));
 $("voExport").addEventListener("click", voExportPng);
@@ -1676,7 +1749,7 @@ window.addEventListener("resize", fitVo);
 voInitLayout();
 
 // ---------- Reiter (Rohdaten / Overlay / Video-Overlay) ----------
-const TABS = [["tabRaw", "panelRaw"], ["tabOv", "panelOv"], ["tabVo", "panelVo"]];
+const TABS = [["tabOv", "panelOv"], ["tabVo", "panelVo"], ["tabRaw", "panelRaw"]];
 function setTab(tabId) {
   for (const [t, p] of TABS) {
     const on = t === tabId;
