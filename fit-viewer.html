@@ -27,7 +27,29 @@
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
   body { margin: 0; background: var(--bg); color: var(--text);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; }
-  main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 48px; }
+  .app { max-width: 1500px; margin: 0 auto; padding: 24px 16px 48px; display: grid; grid-template-columns: 1fr; gap: 20px; }
+  .side h1 { font-size: 1.4rem; }
+  .side .stats { grid-template-columns: 1fr 1fr; margin: 0; }
+  .side .stat { padding: 8px 12px; }
+  .side .stat b { font-size: 1.02rem; overflow-wrap: anywhere; }
+  .content { min-width: 0; }
+  @media (min-width: 900px) {   /* Computer: Seitenleiste links, Reiter rechts */
+    .app { grid-template-columns: 330px minmax(0, 1fr); gap: 28px; align-items: start; }
+    .side { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; padding-right: 4px; }
+  }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  button.tab { background: transparent; color: var(--muted); border: 0; border-bottom: 3px solid transparent;
+    border-radius: 8px 8px 0 0; padding: 10px 20px; font-weight: 600; margin-bottom: -1px; }
+  button.tab:hover { background: var(--head); }
+  :root[data-theme="dark"] button.tab { color: var(--muted); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.tab { color: var(--muted); } }
+  button.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+  :root[data-theme="dark"] button.tab[aria-selected="true"] { color: var(--text); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.tab[aria-selected="true"] { color: var(--text); } }
+  button.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  #emptyState { margin: 8px 0 16px; }
+  .summary { margin-top: 0; }
+  #panelOv .summary + .summary { margin-top: 18px; }
   h1 { font-size: 1.6rem; margin: 0 0 4px; }
   p.sub { color: var(--muted); margin: 0 0 20px; }
   #drop { display: block; box-sizing: border-box; border: 2px dashed var(--border); border-radius: 12px; background: var(--card);
@@ -116,23 +138,47 @@
   #ovTarget .ov-head:empty { display: none; }
   #ovTarget .ov-hero { display: flex; justify-content: center; gap: 64px; flex-wrap: wrap; width: 100%; }
   #ovTarget .ov-hero:empty, #ovTarget .ov-grid:empty { display: none; }
-  #ovTarget .ov-stat { text-align: center; }
+  #ovTarget .ov-stat { text-align: center; min-width: 0; }
   #ovTarget .ov-label { color: #f97316; font-weight: 600; font-size: 20px; margin-bottom: 6px; }
-  #ovTarget .ov-value { font-size: 130px; font-weight: 700; line-height: 1; display: flex; align-items: baseline; justify-content: center; gap: 14px; }
-  #ovTarget .ov-unit { font-size: 36px; font-weight: 500; color: #8b90a0; }
-  #ovTarget .ov-div { font-size: 45px; color: #8b90a0; }
-  #ovTarget .ov-total { font-size: 52px; font-weight: 600; color: #8b90a0; }
+  #ovTarget .ov-value { font-size: 130px; font-weight: 700; line-height: 1; display: flex; align-items: baseline; justify-content: center; gap: .11em; }
+  #ovTarget .ov-unit { font-size: .277em; font-weight: 500; color: #8b90a0; }
+  #ovTarget .ov-div { font-size: .346em; color: #8b90a0; }
+  #ovTarget .ov-total { font-size: .4em; font-weight: 600; color: #8b90a0; }
   #ovTarget .ov-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; }
   #ovTarget .ov-row { display: grid; gap: 20px; width: 100%; }
   #ovTarget .ov-hero--3 .ov-value { font-size: 100px; }
   #ovTarget .ov-stat .ov-sub { font-size: 24px; margin-top: 6px; }
-  #ovTarget .ov-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; padding: 20px 22px; text-align: center; }
+  #ovTarget .ov-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 12px;
+    padding: 20px 22px; text-align: center; min-width: 0; }
   #ovTarget .ov-card .ov-label { font-size: 16px; }
-  #ovTarget .ov-card .ov-value { font-size: 44px; gap: 8px; }
-  #ovTarget .ov-card .ov-unit { font-size: 17px; }
-  #ovTarget .ov-card .ov-div { font-size: 21px; }
-  #ovTarget .ov-card .ov-total { font-size: 24px; }
+  #ovTarget .ov-card .ov-value { font-size: 44px; gap: .18em; }
+  #ovTarget .ov-card .ov-unit { font-size: .386em; }
+  #ovTarget .ov-card .ov-div { font-size: .477em; }
+  #ovTarget .ov-card .ov-total { font-size: .545em; }
   #ovTarget .ov-sub { color: #8b90a0; font-size: 15px; margin-top: 4px; }
+  /* Format 1:1 (1080 x 1080) */
+  #ovTarget.f-1x1 { width: 1080px; height: 1080px; padding: 56px; gap: 36px; }
+  #ovTarget.f-1x1 .ov-head { font-size: 32px; }
+  #ovTarget.f-1x1 .ov-hero { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 26px; }
+  #ovTarget.f-1x1 .ov-stat .ov-value { font-size: 104px; }
+  #ovTarget.f-1x1 .ov-hero--3 .ov-value { font-size: 84px; }
+  #ovTarget.f-1x1 .ov-stat .ov-sub { font-size: 22px; }
+  #ovTarget.f-1x1 .ov-grid, #ovTarget.f-1x1 .ov-row { gap: 16px; }
+  #ovTarget.f-1x1 .ov-card { padding: 16px 14px; }
+  #ovTarget.f-1x1 .ov-card .ov-value { font-size: 40px; }
+  /* Format 9:16 (1080 x 1920) */
+  #ovTarget.f-9x16 { width: 1080px; height: 1920px; padding: 64px; gap: 56px; }
+  #ovTarget.f-9x16 .ov-head { font-size: 42px; }
+  #ovTarget.f-9x16 .ov-hero { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 44px; }
+  #ovTarget.f-9x16 .ov-stat .ov-value { font-size: 170px; }
+  #ovTarget.f-9x16 .ov-hero--3 .ov-value { font-size: 140px; }
+  #ovTarget.f-9x16 .ov-stat .ov-label { font-size: 28px; }
+  #ovTarget.f-9x16 .ov-stat .ov-sub { font-size: 28px; }
+  #ovTarget.f-9x16 .ov-grid, #ovTarget.f-9x16 .ov-row { gap: 24px; }
+  #ovTarget.f-9x16 .ov-card { padding: 26px 22px; }
+  #ovTarget.f-9x16 .ov-card .ov-value { font-size: 58px; }
+  #ovTarget.f-9x16 .ov-card .ov-label { font-size: 22px; }
+  #ovTarget.f-9x16 .ov-card .ov-sub { font-size: 20px; }
 
   .range { position: relative; }
   .tip { padding-bottom: 6px; }
@@ -155,96 +201,111 @@
 </style>
 </head>
 <body>
-<main>
-  <h1>Track Viewer</h1>
-  <p class="sub">Schritt 1: FIT- oder GPX-Datei laden und die aufgezeichneten Werte als Tabelle ansehen. Alles läuft lokal in deinem Browser.</p>
+<main class="app">
+  <aside class="side">
+      <h1>Track Viewer</h1>
+      <p class="sub">Lade eine FIT- oder GPX-Datei. Alles läuft lokal in deinem Browser.</p>
 
-  <label id="drop">
-    <input id="file" type="file" accept=".fit,.gpx" class="hidden">
-    <div><strong>FIT- oder GPX-Datei auswählen</strong> oder hierher ziehen</div>
-  </label>
-  <div id="msg"></div>
-  <div id="stats" class="stats hidden"></div>
-  <section id="summary" class="summary hidden">
-    <h2>Zusammenfassung eines Zeitraums</h2>
-    <div class="range">
-      <label>Angabe als
-        <select id="sMode">
-          <option value="clock">Uhrzeit</option>
-          <option value="dur">Aktivitätsdauer</option>
-        </select>
+      <label id="drop">
+        <input id="file" type="file" accept=".fit,.gpx" class="hidden">
+        <div><strong>FIT- oder GPX-Datei auswählen</strong> oder hierher ziehen</div>
       </label>
-      <label>Von <input id="sFrom" type="text" inputmode="numeric" autocomplete="off"></label>
-      <label>Bis <input id="sTo" type="text" inputmode="numeric" autocomplete="off"></label>
-      <button id="sBtn" type="button">Zusammenfassen</button>
+      <div id="msg"></div>
+      <div id="stats" class="stats hidden"></div>
+  </aside>
+  <div class="content">
+    <div class="tabs" role="tablist" aria-label="Bereiche">
+      <button type="button" class="tab" role="tab" id="tabRaw" aria-controls="panelRaw" aria-selected="true">Rohdaten</button>
+      <button type="button" class="tab" role="tab" id="tabOv" aria-controls="panelOv" aria-selected="false" tabindex="-1">Overlay</button>
     </div>
-    <div id="sHint" class="muted"></div>
-    <div id="sMsg" class="rangeMsg"></div>
-    <div id="sOut" class="stats"></div>
-    <div id="sNote" class="muted"></div>
-  </section>
-  <section id="overlay" class="summary hidden">
-    <h2>Overlay erzeugen (Test)</h2>
-    <p class="muted">Die Werte der Zusammenfassung werden automatisch übernommen. Das Layout stellst du unten im Schema ein, Werte und Namen kannst du in der Tabelle überschreiben. Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, das Overlay addiert den heutigen Wert.</p>
-    <div class="range">
-      <label>Titel (optional) <input id="ovTitle" type="text" placeholder="z. B. Tag 3" style="width:16em" autocomplete="off"></label>
-      <label>Auflösung (16:9)
-        <select id="ovRes">
-          <option value="1280x720">720p (1280 × 720)</option>
-          <option value="1920x1080" selected>1080p (1920 × 1080)</option>
-          <option value="2560x1440">1440p (2560 × 1440)</option>
-          <option value="3840x2160">2160p (3840 × 2160)</option>
-        </select>
-      </label>
-      <label class="chk"><input type="checkbox" id="ovTransparent"> Transparenter Hintergrund</label>
+    <p id="emptyState" class="muted">Lade links eine FIT- oder GPX-Datei, um die Rohdaten und den Overlay-Generator zu nutzen.</p>
+    <div id="panelRaw" role="tabpanel" aria-labelledby="tabRaw">
+        <div id="actions" class="actions hidden"><button id="csvBtn" type="button">Alle Zeilen als CSV herunterladen</button></div>
+        <div id="range" class="range hidden">
+          <label>Von Zeile <input id="from" type="number" min="1" step="1" inputmode="numeric"></label>
+          <label>Bis Zeile <input id="to" type="number" min="1" step="1" inputmode="numeric"></label>
+          <button id="rangeBtn" type="button">Anzeigen</button>
+          <span id="rangeInfo"></span>
+          <span class="tip"><button id="tipBtn" type="button" class="info" aria-label="Hilfe zur Zeilenauswahl" aria-expanded="false">?</button></span>
+          <div id="tipBox" class="tipbox" role="tooltip">
+            <b>Was machen diese Felder?</b><br>
+            Die Datei besteht aus vielen Messpunkten, meist einem pro Sekunde. Jede Zeile der Tabelle ist ein Messpunkt, die Spalte „Nr.“ zeigt die Zeilennummer.
+            <ul>
+              <li><b>Von Zeile:</b> erste Zeile, die angezeigt wird</li>
+              <li><b>Bis Zeile:</b> letzte Zeile, die angezeigt wird</li>
+            </ul>
+            Beispiel: 500 bis 800 zeigt die Zeilen 500 bis 800 (301 Zeilen). Es sind höchstens 1000 Zeilen gleichzeitig möglich. Für die komplette Aufzeichnung nutze den CSV-Download.
+          </div>
+        </div>
+        <div id="rangeMsg" class="rangeMsg"></div>
+        <div id="tablewrap" class="wrap hidden"><table id="table"></table></div>
     </div>
-    <h3 class="ovh">Layout</h3>
-    <p class="muted">Ziehe ein Feld am Griff ⠿ in eine Zeile oder nach „Nicht angezeigt“. Felder in derselben Zeile teilen sich deren Breite, ein einzelnes Feld füllt die ganze Zeile. Mit ◀ ▶ änderst du die Reihenfolge innerhalb einer Zeile. Es sind höchstens 3 Hauptfelder erlaubt.</p>
-    <div class="ovlayout" id="ovLayout"></div>
-    <label class="pauseopt"><input type="checkbox" id="ovOn_pause" checked> Pause als Zusatzzeile unter der Bewegungszeit anzeigen</label>
-    <div id="ovDndNote" class="rangeMsg"></div>
-    <h3 class="ovh">Werte und Namen</h3>
-    <div style="overflow-x:auto">
-      <table class="ovtable">
-        <thead><tr><th>Feld</th><th>Name im Overlay</th><th>Wert</th><th>Einheit</th><th>Summe bis Vortag</th></tr></thead>
-        <tbody id="ovRows"></tbody>
-      </table>
-    </div>
-    <div class="btnrow">
-      <button id="ovExport" type="button">Als PNG herunterladen</button>
-      <button id="ovReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
-      <button id="ovLayoutReset" type="button" class="secondary">Layout zurücksetzen</button>
-      <span id="ovInfo" class="muted" style="margin:0"></span>
-    </div>
-    <div id="ovLayoutMsg" class="rangeMsg"></div>
-    <div id="ovMsg" class="rangeMsg"></div>
-    <div id="ovWrap">
-      <div id="ovStage"><div id="ovScaler"><div id="ovTarget">
-        <div class="ov-head" id="ovHead"></div>
-        <div class="ov-hero" id="ovHero"></div>
-        <div class="ov-grid" id="ovGrid"></div>
-      </div></div></div>
-    </div>
-  </section>
-  <div id="actions" class="actions hidden"><button id="csvBtn" type="button">Alle Zeilen als CSV herunterladen</button></div>
-  <div id="range" class="range hidden">
-    <label>Von Zeile <input id="from" type="number" min="1" step="1" inputmode="numeric"></label>
-    <label>Bis Zeile <input id="to" type="number" min="1" step="1" inputmode="numeric"></label>
-    <button id="rangeBtn" type="button">Anzeigen</button>
-    <span id="rangeInfo"></span>
-    <span class="tip"><button id="tipBtn" type="button" class="info" aria-label="Hilfe zur Zeilenauswahl" aria-expanded="false">?</button></span>
-    <div id="tipBox" class="tipbox" role="tooltip">
-      <b>Was machen diese Felder?</b><br>
-      Die Datei besteht aus vielen Messpunkten, meist einem pro Sekunde. Jede Zeile der Tabelle ist ein Messpunkt, die Spalte „Nr.“ zeigt die Zeilennummer.
-      <ul>
-        <li><b>Von Zeile:</b> erste Zeile, die angezeigt wird</li>
-        <li><b>Bis Zeile:</b> letzte Zeile, die angezeigt wird</li>
-      </ul>
-      Beispiel: 500 bis 800 zeigt die Zeilen 500 bis 800 (301 Zeilen). Es sind höchstens 1000 Zeilen gleichzeitig möglich. Für die komplette Aufzeichnung nutze den CSV-Download.
+    <div id="panelOv" role="tabpanel" aria-labelledby="tabOv" hidden>
+        <section id="summary" class="summary hidden">
+          <h2>Zusammenfassung eines Zeitraums</h2>
+          <div class="range">
+            <label>Angabe als
+              <select id="sMode">
+                <option value="clock">Uhrzeit</option>
+                <option value="dur">Aktivitätsdauer</option>
+              </select>
+            </label>
+            <label>Von <input id="sFrom" type="text" inputmode="numeric" autocomplete="off"></label>
+            <label>Bis <input id="sTo" type="text" inputmode="numeric" autocomplete="off"></label>
+            <button id="sBtn" type="button">Zusammenfassen</button>
+          </div>
+          <div id="sHint" class="muted"></div>
+          <div id="sMsg" class="rangeMsg"></div>
+          <div id="sOut" class="stats"></div>
+          <div id="sNote" class="muted"></div>
+        </section>
+        <section id="overlay" class="summary hidden">
+          <h2>Overlay erzeugen (Test)</h2>
+          <p class="muted">Die Werte der Zusammenfassung werden automatisch übernommen. Das Layout stellst du unten im Schema ein, Werte und Namen kannst du in der Tabelle überschreiben. Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, das Overlay addiert den heutigen Wert.</p>
+          <div class="range">
+            <label>Titel (optional) <input id="ovTitle" type="text" placeholder="z. B. Tag 3" style="width:16em" autocomplete="off"></label>
+            <label>Format
+              <select id="ovFormat">
+                <option value="16x9">16:9 (Video)</option>
+                <option value="1x1">1:1 (Instagram-Beitrag)</option>
+                <option value="9x16">9:16 (Reel / Story)</option>
+              </select>
+            </label>
+            <label>Auflösung
+              <select id="ovRes"></select>
+            </label>
+            <label class="chk"><input type="checkbox" id="ovTransparent"> Transparenter Hintergrund</label>
+          </div>
+          <h3 class="ovh">Layout</h3>
+          <p class="muted">Ziehe ein Feld am Griff ⠿ in eine Zeile oder nach „Nicht angezeigt“. Felder in derselben Zeile teilen sich deren Breite, ein einzelnes Feld füllt die ganze Zeile. Mit ◀ ▶ änderst du die Reihenfolge innerhalb einer Zeile. Es sind höchstens 3 Hauptfelder erlaubt. Jedes Format merkt sich sein eigenes Layout, solange die Seite geöffnet ist.</p>
+          <div class="ovlayout" id="ovLayout"></div>
+          <label class="pauseopt"><input type="checkbox" id="ovOn_pause" checked> Pause als Zusatzzeile unter der Bewegungszeit anzeigen</label>
+          <div id="ovDndNote" class="rangeMsg"></div>
+          <h3 class="ovh">Werte und Namen</h3>
+          <div style="overflow-x:auto">
+            <table class="ovtable">
+              <thead><tr><th>Feld</th><th>Name im Overlay</th><th>Wert</th><th>Einheit</th><th>Summe bis Vortag</th></tr></thead>
+              <tbody id="ovRows"></tbody>
+            </table>
+          </div>
+          <div class="btnrow">
+            <button id="ovExport" type="button">Als PNG herunterladen</button>
+            <button id="ovReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
+            <button id="ovLayoutReset" type="button" class="secondary">Layout zurücksetzen</button>
+            <span id="ovInfo" class="muted" style="margin:0"></span>
+          </div>
+          <div id="ovLayoutMsg" class="rangeMsg"></div>
+          <div id="ovMsg" class="rangeMsg"></div>
+          <div id="ovWrap">
+            <div id="ovStage"><div id="ovScaler"><div id="ovTarget">
+              <div class="ov-head" id="ovHead"></div>
+              <div class="ov-hero" id="ovHero"></div>
+              <div class="ov-grid" id="ovGrid"></div>
+            </div></div></div>
+          </div>
+        </section>
     </div>
   </div>
-  <div id="rangeMsg" class="rangeMsg"></div>
-  <div id="tablewrap" class="wrap hidden"><table id="table"></table></div>
 </main>
 
 <script>
@@ -437,7 +498,39 @@ const COLS = [
 ];
 const MAX_ROWS = 1000;
 let current = null;      // zuletzt geladene Daten (für den CSV-Export)
-let downloads = null;    // wird gesetzt, sobald die Download-Funktion verfügbar ist
+let downloads = null;    // Download-Funktion der Plattform (null, wenn in dieser Ansicht nicht verfügbar)
+
+// Download-Funktion anfragen (kann etwas dauern oder fehlen, z. B. wenn die Seite direkt in einem Browser-Tab geöffnet ist)
+const downloadsReady = (async () => {
+  try {
+    if (window.claude && claude.use) downloads = await claude.use("downloads");
+  } catch (e) { downloads = null; }
+  return downloads;
+})();
+
+// Datei speichern: bevorzugt über die Plattform, sonst klassischer Browser-Download.
+// Gibt "" bei Erfolg oder eine Fehlermeldung zurück.
+async function saveFile(filename, data, mime) {
+  const dl = await downloadsReady;
+  if (dl) {
+    try { await dl.save({ filename, data }); return ""; }
+    catch (e) {
+      if (e && e.code === "declined") return "";
+      const unavailable = e && ["unavailable", "not_granted", "capability_disabled", "capability_removed"].includes(e.code);
+      if (!unavailable) return "Download nicht möglich: " + ((e && (e.message || e.code)) || e);
+    }
+  }
+  try {   // Ersatzweg
+    const blob = data instanceof Blob ? data : new Blob([data], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return "";
+  } catch (e) {
+    return "Download nicht möglich: " + e.message;
+  }
+}
 
 // ---------- CSV-Export ----------
 function toCsv({ rows, present }) {
@@ -455,25 +548,12 @@ function toCsv({ rows, present }) {
 }
 
 async function saveCsv() {
-  if (!current || !downloads) return;
+  if (!current) return;
   const base = current.name.replace(/\.[^.]+$/, "");
-  try {
-    await downloads.save({ filename: base + ".csv", data: toCsv(current) });
-  } catch (e) {
-    if (e && e.code !== "declined") msg("Download nicht möglich: " + (e.message || e.code), true);
-  }
+  const err = await saveFile(base + ".csv", toCsv(current), "text/csv;charset=utf-8");
+  if (err) msg(err, true);
 }
 document.getElementById("csvBtn").addEventListener("click", saveCsv);
-
-// Download-Funktion anfragen; ohne sie bleibt der Button einfach versteckt
-(async () => {
-  try {
-    if (window.claude && claude.use) {
-      downloads = await claude.use("downloads");
-      if (downloads && current) $("actions").classList.remove("hidden");
-    }
-  } catch (e) { downloads = null; }
-})();
 
 const $ = id => document.getElementById(id);
 const msg = (t, err) => { $("msg").textContent = t; $("msg").className = err ? "err" : ""; };
@@ -484,11 +564,14 @@ const avg = a => a.reduce((x,y)=>x+y,0) / a.length;
 function show(rows, name) {
   if (!rows.length) { msg("Keine Datenpunkte (record-Nachrichten) gefunden.", true); return; }
   const present = COLS.filter(([k]) => rows.some(r => r[k] !== undefined));
+  $("emptyState").classList.add("hidden");
   current = { rows, present, name };
-  if (downloads) $("actions").classList.remove("hidden");
+  $("actions").classList.remove("hidden");
 
   // Kennzahlen
-  const s = [stat("Datenpunkte", rows.length)];
+  const s = [stat("Datei", name)];
+  if (rows.find(r => r.time)) s.push(stat("Datum", rows.find(r => r.time).time.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" })));
+  s.push(stat("Datenpunkte", rows.length));
   const first = rows.find(r => r.time), last = [...rows].reverse().find(r => r.time);
   if (first && last) {
     const sec = Math.round((last.time - first.time) / 1000);
@@ -881,6 +964,25 @@ function ovBlock(kind, label, value, unit, total, sub) {
 let ovError = "";   // Layout-Fehler (z. B. zu viele Hauptfelder); blockiert die Erzeugung
 
 const ovField = id => OV_FIELDS.find(f => f.id === id);
+
+// Formate: Entwurfsgröße des Overlays (in CSS-Pixeln) und wählbare Export-Auflösungen
+const OV_FORMATS = {
+  "16x9": { base: [1920, 1080], sizes: [[1280, 720], [1920, 1080], [2560, 1440], [3840, 2160]] },
+  "1x1":  { base: [1080, 1080], sizes: [[720, 720], [1080, 1080], [1440, 1440], [2160, 2160]] },
+  "9x16": { base: [1080, 1920], sizes: [[720, 1280], [1080, 1920], [1440, 2560], [2160, 3840]] },
+};
+const OV_LEVELS = ["720p", "1080p", "1440p", "2160p"];
+let ovFormat = "16x9";
+const ovBase = () => OV_FORMATS[ovFormat].base;
+
+// Standard-Layouts je Format (Hauptfelder, Zeile 1 bis 4, nicht angezeigt)
+const OV_OFF = ["gesamt", "avgPower", "maxPower", "avgCad", "altMax"];
+const OV_LAYOUT_DEFAULTS = {
+  "16x9": { hero: ["strecke", "anstieg"], 1: ["zeit", "avgSpeed", "maxSpeed"], 2: ["avgHr", "maxHr", "kcal"], 3: [], 4: [], off: OV_OFF },
+  "1x1":  { hero: ["strecke", "anstieg"], 1: ["zeit", "avgSpeed", "maxSpeed"], 2: ["avgHr", "maxHr", "kcal"], 3: [], 4: [], off: OV_OFF },
+  "9x16": { hero: ["strecke", "anstieg"], 1: ["zeit", "avgSpeed"], 2: ["maxSpeed", "kcal"], 3: ["avgHr", "maxHr"], 4: [], off: OV_OFF },
+};
+const ovLayouts = {};   // gemerkte Layouts je Format
 const OV_ZONES = [["hero", "Hauptfelder (max. 3)"], ["1", "Zeile 1"], ["2", "Zeile 2"], ["3", "Zeile 3"], ["4", "Zeile 4"], ["off", "Nicht angezeigt"]];
 const zoneOf = id => document.querySelector(`.chip[data-id="${id}"]`).parentElement.dataset.zone;
 const zoneIds = z => [...$("ovZone_" + z).children].map(c => c.dataset.id);   // Reihenfolge = Reihenfolge im Overlay
@@ -943,8 +1045,10 @@ function buildOverlay() {
 
   const transparent = $("ovTransparent").checked;
   $("ovTarget").style.background = transparent ? "transparent" : "#0f1117";
+  $("ovTarget").className = "f-" + ovFormat;
   $("ovStage").classList.toggle("checker", transparent);
   fitOverlay();
+  fitOverlayText();
 }
 
 // ---------- Layout-Schema: Chips, Zonen, Drag & Drop ----------
@@ -955,11 +1059,49 @@ function moveChip(chip, dir) {
   buildOverlay();
 }
 
-function applyDefaultLayout() {
-  for (const f of OV_FIELDS.filter(f => !f.sub)) {
-    $("ovZone_" + (f.on ? f.pos : "off")).appendChild(document.querySelector(`.chip[data-id="${f.id}"]`));
+function captureLayout() {
+  const l = {};
+  for (const [z] of OV_ZONES) l[z] = zoneIds(z);
+  return l;
+}
+
+function applyLayout(layout) {
+  const placed = new Set();
+  for (const [z] of OV_ZONES) {
+    for (const id of layout[z] || []) {
+      const chip = document.querySelector(`.chip[data-id="${id}"]`);
+      if (!chip || placed.has(id)) continue;
+      $("ovZone_" + z).appendChild(chip);
+      placed.add(id);
+    }
   }
+  document.querySelectorAll("#ovLayout .chip").forEach(c => {   // nicht aufgeführte Felder landen unter "Nicht angezeigt"
+    if (!placed.has(c.dataset.id)) $("ovZone_off").appendChild(c);
+  });
   buildOverlay();
+}
+
+function applyDefaultLayout() { applyLayout(OV_LAYOUT_DEFAULTS[ovFormat]); }
+
+function rebuildResOptions(levelIndex) {
+  const sel = $("ovRes");
+  sel.innerHTML = "";
+  OV_FORMATS[ovFormat].sizes.forEach(([w, h], i) => {
+    const o = document.createElement("option");
+    o.value = `${w}x${h}`; o.textContent = `${OV_LEVELS[i]} (${w} × ${h})`;
+    sel.appendChild(o);
+  });
+  sel.selectedIndex = levelIndex;
+}
+
+function setFormat(newFormat) {
+  if (!OV_FORMATS[newFormat] || newFormat === ovFormat) return;
+  ovLayouts[ovFormat] = captureLayout();                 // Layout des alten Formats merken
+  const level = $("ovRes").selectedIndex;                // gewählte Stufe (720p, 1080p, ...) beibehalten
+  ovFormat = newFormat;
+  rebuildResOptions(level < 0 ? 1 : level);
+  updateOvInfo();
+  applyLayout(ovLayouts[newFormat] || OV_LAYOUT_DEFAULTS[newFormat]);
 }
 
 function initLayout() {
@@ -997,16 +1139,30 @@ function initLayout() {
   } else {
     $("ovDndNote").textContent = "Drag & Drop konnte nicht geladen werden (Internetverbindung prüfen). Mit ◀ ▶ kannst du Felder innerhalb einer Zeile verschieben.";
   }
+  rebuildResOptions(1);
   applyDefaultLayout();
 }
 
 function fitOverlay() {
-  const f = Math.min(1, Math.max(0.05, ($("ovWrap").clientWidth - 22) / 1920));
-  $("ovStage").style.width = Math.round(1920 * f) + "px";
-  $("ovStage").style.height = Math.round(1080 * f) + "px";
+  const [bw, bh] = ovBase();
+  const byWidth = ($("ovWrap").clientWidth - 22) / bw;
+  const byHeight = Math.max(320, window.innerHeight * 0.8) / bh;     // hohe Formate nicht unnötig riesig anzeigen
+  const f = Math.min(1, Math.max(0.05, Math.min(byWidth, byHeight)));
+  $("ovStage").style.width = Math.round(bw * f) + "px";
+  $("ovStage").style.height = Math.round(bh * f) + "px";
   $("ovScaler").style.transform = `scale(${f})`;
 }
 
+// Zu breite Werte schrittweise verkleinern, damit nichts über den Kartenrand hinausragt
+function fitOverlayText() {
+  document.querySelectorAll("#ovTarget .ov-value").forEach(v => {
+    v.style.fontSize = "";
+    let size = parseFloat(getComputedStyle(v).fontSize), guard = 0;
+    while (v.scrollWidth > v.clientWidth + 1 && size > 14 && guard++ < 80) {
+      size -= 2; v.style.fontSize = size + "px";
+    }
+  });
+}
 function ovSize() { return $("ovRes").value.split("x").map(Number); }
 function updateOvInfo() {
   const [w, h] = ovSize();
@@ -1020,16 +1176,17 @@ async function exportOverlay() {
   if (ovError) { msgEl.textContent = ovError; return; }
   if (typeof html2canvas === "undefined") { msgEl.textContent = "Die Export-Bibliothek konnte nicht geladen werden (Internetverbindung prüfen)."; return; }
   const [w, h] = ovSize();
+  const [bw, bh] = ovBase();
   const transparent = $("ovTransparent").checked;
   btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = "Exportiere …";
   try {
     let canvas = await html2canvas($("ovTarget"), {
       backgroundColor: transparent ? null : "#0f1117",
-      scale: w / 1920, width: 1920, height: 1080, useCORS: true,
+      scale: w / bw, width: bw, height: bh, useCORS: true,
       onclone: doc => {       // im Export-Klon die Vorschau-Verkleinerung entfernen
         doc.getElementById("ovScaler").style.transform = "none";
-        doc.getElementById("ovStage").style.width = "1920px";
-        doc.getElementById("ovStage").style.height = "1080px";
+        doc.getElementById("ovStage").style.width = bw + "px";
+        doc.getElementById("ovStage").style.height = bh + "px";
         doc.getElementById("ovWrap").style.overflow = "visible";
       }
     });
@@ -1041,16 +1198,9 @@ async function exportOverlay() {
     }
     const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
     if (!blob) throw new Error("Das Bild konnte nicht erzeugt werden (evtl. zu groß für dieses Gerät). Bitte eine kleinere Auflösung wählen.");
-    const name = `zusammenfassung-${h}p.png`;
-    if (downloads) {
-      try { await downloads.save({ filename: name, data: blob }); }
-      catch (e) { if (!e || e.code !== "declined") msgEl.textContent = "Download nicht möglich: " + ((e && (e.message || e.code)) || e); }
-    } else {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+    const name = `zusammenfassung-${ovFormat}-${w}x${h}.png`;
+    const err = await saveFile(name, blob, "image/png");
+    if (err) msgEl.textContent = err;
   } catch (e) {
     msgEl.textContent = "Export fehlgeschlagen: " + e.message;
   } finally {
@@ -1063,10 +1213,35 @@ $("ovOn_pause").addEventListener("change", buildOverlay);
 $("ovLayoutReset").addEventListener("click", applyDefaultLayout);
 $("ovTransparent").addEventListener("change", buildOverlay);
 $("ovRes").addEventListener("change", updateOvInfo);
+$("ovFormat").addEventListener("change", e => setFormat(e.target.value));
 $("ovReset").addEventListener("click", () => { if (current && current.summaryData) fillOverlay(current.summaryData); });
 $("ovExport").addEventListener("click", exportOverlay);
 window.addEventListener("resize", fitOverlay);
 initLayout();
+
+// ---------- Reiter (Rohdaten / Overlay) ----------
+const TABS = [["tabRaw", "panelRaw"], ["tabOv", "panelOv"]];
+function setTab(tabId) {
+  for (const [t, p] of TABS) {
+    const on = t === tabId;
+    $(t).setAttribute("aria-selected", on);
+    $(t).tabIndex = on ? 0 : -1;
+    $(p).hidden = !on;
+  }
+  if (tabId === "tabOv") { fitOverlay(); fitOverlayText(); }   // Größe neu berechnen, solange der Reiter sichtbar ist
+}
+TABS.forEach(([t], i) => {
+  $(t).addEventListener("click", () => setTab(t));
+  $(t).addEventListener("keydown", e => {
+    let j = null;
+    if (e.key === "ArrowRight") j = (i + 1) % TABS.length;
+    else if (e.key === "ArrowLeft") j = (i + TABS.length - 1) % TABS.length;
+    else if (e.key === "Home") j = 0;
+    else if (e.key === "End") j = TABS.length - 1;
+    if (j === null) return;
+    e.preventDefault(); setTab(TABS[j][0]); $(TABS[j][0]).focus();
+  });
+});
 
 async function handle(file) {
   if (!file) return;
@@ -1075,7 +1250,7 @@ async function handle(file) {
     const isGpx = file.name.toLowerCase().endsWith(".gpx");
     show(isGpx ? parseGpx(await file.text()) : parseFit(await file.arrayBuffer()), file.name);
   } catch (e) {
-    $("stats").classList.add("hidden"); $("tablewrap").classList.add("hidden"); $("actions").classList.add("hidden"); $("range").classList.add("hidden"); $("rangeMsg").textContent = ""; $("summary").classList.add("hidden"); $("overlay").classList.add("hidden");
+    $("stats").classList.add("hidden"); $("tablewrap").classList.add("hidden"); $("actions").classList.add("hidden"); $("range").classList.add("hidden"); $("rangeMsg").textContent = ""; $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); $("emptyState").classList.remove("hidden");
     msg("Fehler: " + e.message, true);
   }
 }
