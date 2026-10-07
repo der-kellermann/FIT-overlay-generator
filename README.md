@@ -16,35 +16,36 @@ Das Tool besteht aus **einer einzigen HTML-Datei** (`fit-viewer.html`). Es gibt 
 
 ## Was kann das Tool?
 
-Das Tool hat links eine Seitenleiste (Upload und Quicklook) und rechts drei Reiter.
+Das Tool hat links eine Seitenleiste (Upload und Quicklook) und rechts drei Reiter: **Fullscreen**, **Seitenleiste** und **Rohdaten**. Am Handy steht alles untereinander.
+
+### Fullscreen
+Ein Overlay in voller Bildgröße, gedacht für Endcards und Instagram-Beiträge.
+- **Zusammenfassung eines Zeitraums** (einklappbar): Auswahl per **Uhrzeit**, **Zeit nach Start** oder **Kilometermarke** (von/bis), mit Kärtchen für Strecke, Höhenmeter, Bewegungszeit, Pause, Tempo, Puls, Leistung, Kadenz und Kalorien
+- **Overlay-Vorschau direkt darunter**, danach die Einstellungen
+- Formate **16:9**, **1:1** und **9:16**, Auflösung 720p bis 2160p, optional transparenter Hintergrund
+- **Layout-Schema mit Drag & Drop**: bis zu 3 Hauptfelder und 4 Zeilen, gestrichelte leere Plätze zeigen die maximale Anzahl (pro Zeile 3 Felder bei 16:9 und 1:1, 2 bei 9:16)
+- Eigene Feldnamen, Titel und „Summe bis Vortag“ (Werte der Vortage trägst du von Hand ein)
+- Export als **PNG**
+
+### Seitenleiste
+Ein Overlay für den linken oder rechten Rand eines Videos, das die Werte eines **gewählten Zeitraums** zeigt.
+- **Zeitraum von/bis** per Uhrzeit, Zeit nach Start oder Kilometermarke, einklappbar und mit denselben Zusammenfassungskärtchen wie im Fullscreen. Standard ist die ganze Aktivität, vorne abschneiden ist möglich. Die Auswahl ist **unabhängig** vom Fullscreen-Reiter.
+- Startzustand („Von 0 bis 0“): alle Werte 0, Herzfrequenz „-“
+- Breite **Schmal (1/5)**, **Normal (1/4)** oder **Breit (1/3)**, links oder rechts
+- **Overlay-Vorschau oben**, Einstellungen und Layout darunter
+- Layout-Schema mit 7 Zeilen und gestrichelten Plätzen: höchstens 2 Felder nebeneinander (bei „Schmal“ 1)
+- Eigene Überschrift, eigene Feldnamen und „Summe bis Vortag“ (grau neben dem Wert)
+- Export als **PNG** in voller Bildgröße mit transparentem Hintergrund, zum Drüberlegen im Schnittprogramm
 
 ### Rohdaten
 - Alle Messpunkte als Tabelle, mit frei wählbarem Zeilenbereich (maximal 1000 Zeilen gleichzeitig)
 - **CSV-Download** aller Zeilen
 
-### Fullscreen
-Ein Overlay in voller Bildgröße, gedacht für Endcards und Instagram-Beiträge.
-- Zusammenfassung eines Zeitraums per **Uhrzeit**, **Zeit nach Start** oder **Kilometermarke** (von/bis)
-- Strecke, Höhenmeter, Bewegungszeit, Pause, Gesamtzeit, Tempo (Ø/Max), Puls (Ø/Max), Leistung, Kadenz, Kalorien
-- Formate **16:9**, **1:1** und **9:16**, Auflösung 720p bis 2160p, optional transparenter Hintergrund
-- **Layout-Schema mit Drag & Drop**: bis zu 3 Hauptfelder, bis zu 4 Zeilen, Felder ein- und ausblenden
-- Eigene Feldnamen, Titel und „Summe bis Vortag“ (Tageswerte der Vortage werden von Hand eingetragen)
-- Export als **PNG**
-
-### Seitenleiste
-Ein Overlay für den linken oder rechten Rand eines Videos, das den Stand **vom Start bis zu einem gewählten Zeitpunkt** zeigt.
-- Breite **Schmal (1/5)**, **Normal (1/4)** oder **Breit (1/3)**
-- Zeitpunkt per **Uhrzeit**, **Zeit nach Start** oder **Kilometermarke**
-- Startzustand: alle Werte 0, Herzfrequenz „-“
-- Layout-Schema mit 7 Zeilen und höchstens 2 Feldern nebeneinander (bei „Schmal“ 1)
-- Eigene Überschrift, eigene Feldnamen und „Summe bis Vortag“ (grau neben dem Wert)
-- Export als **PNG** in voller Bildgröße mit transparentem Hintergrund, zum Drüberlegen im Schnittprogramm
-
 ## So benutzt du es
 
 1. Datei `fit-viewer.html` im Browser öffnen (oder die gehostete Seite aufrufen).
 2. Links eine **FIT- oder GPX-Datei** auswählen oder hineinziehen.
-3. Im Reiter **Fullscreen** oder **Seitenleiste** Zeitraum bzw. Zeitpunkt wählen, Layout anpassen und das **PNG herunterladen**.
+3. Im Reiter **Fullscreen** oder **Seitenleiste** den Zeitraum wählen, das Layout anpassen und das **PNG herunterladen**.
 
 ## Technik und Datenschutz
 
@@ -72,28 +73,30 @@ Ein Overlay für den linken oder rechten Rand eines Videos, das den Stand **vom 
 - Layout speichern, Import und Export des Layouts
 - Mehrere Dateien auf einmal, automatische Summen über mehrere Tage
 - Design-Presets und eigene Farben
+- Weniger Scrollen im Rohdaten-Reiter
 
 ## Change Index
 
 > Die Datumsangaben vor dem 7. Oktober 2026 wurden nachträglich zugeordnet und können um einen Tag abweichen.
 
 ### 2026-10-07
-- **Seitenleiste:** neuer Reiter mit Overlay für den Rand eines Videos
-  - Position links oder rechts, Breite Schmal (1/5), Normal (1/4), Breit (1/3)
-  - Zeitpunkt per Uhrzeit, Zeit nach Start oder Kilometermarke
-  - Layout-Schema mit 7 Zeilen, höchstens 2 Felder nebeneinander (bei Schmal 1)
-  - „Summe bis Vortag“ für Strecke, Anstieg, Kalorien und Zeiten
-  - Startzustand: alle Werte 0, Herzfrequenz „-“
-  - PNG-Export in voller Bildgröße mit transparentem Hintergrund
-- **Umbenennung:** Reiter heißen jetzt „Rohdaten“, „Fullscreen“ und „Seitenleiste“
+- **Reiter-Reihenfolge:** Fullscreen, Seitenleiste, Rohdaten. Fullscreen ist beim Öffnen aktiv.
+- **Seitenleiste:** Zeitraum von/bis wie im Fullscreen (unabhängige Auswahl, vorne abschneiden möglich), einklappbar, mit Zusammenfassungskärtchen
+- **Seitenleiste:** Vorschau steht oben, Einstellungen, Layout und Werte darunter
+- **Fullscreen:** Zusammenfassung kompakter und einklappbar, Vorschau direkt darunter, Einstellungen danach
+- **Layout-Schema:** gestrichelte leere Plätze zeigen die maximale Anzahl pro Zeile (Fullscreen: 3 Hauptfelder, pro Zeile 3/3/2 je nach Format; Seitenleiste: 2 bzw. 1), Fehlermeldung bei Überschreitung
+- Auswahlfeld „Angabe als“ nicht mehr abgeschnitten, einheitliche Höhe der Eingabefelder
+- **Seitenleiste:** Startzustand („Von 0 bis 0“) mit Nullwerten und „-“ bei der Herzfrequenz
+- **Seitenleiste:** Breite Schmal (1/5), Normal (1/4), Breit (1/3)
+- **Seitenleiste:** neuer Reiter mit Overlay für den Rand eines Videos (links/rechts, Layout-Schema mit 7 Zeilen, „Summe bis Vortag“, PNG mit transparentem Hintergrund)
+- **Umbenennung:** Reiter heißen „Fullscreen“ und „Seitenleiste“ (Dateinamen der Exporte entsprechend)
 - **Fullscreen:** Auswahl per Kilometermarke (von/bis), „Aktivitätsdauer“ heißt jetzt „Zeit nach Start“
 - **Karten:** Beschriftung oben, Wert unten, Karten einer Zeile sind gleich hoch
-- Dateinamen der Exporte angepasst (`fullscreen-…`, `seitenleiste-…`)
 - Behoben: Kilometereingabe wurde beim Verlassen des Feldes als Zeit umformatiert
 
 ### 2026-10-04 bis 2026-10-06
 - **Formate** 1:1 und 9:16 für Fullscreen, jedes Format merkt sich sein Layout
-- **Layout der Seite:** Seitenleiste mit Upload und Quicklook, drei Reiter am Computer, einspaltig am Handy
+- **Layout der Seite:** Seitenleiste mit Upload und Quicklook, Reiter am Computer, einspaltig am Handy
 - **Layout-Schema mit Drag & Drop** statt Dropdowns, Reihenfolge per Pfeilen, auf dem Handy untereinander
 - Hauptfelder (max. 3) und Zeilen 1 bis 4, Fehlermeldung bei zu vielen Hauptfeldern
 - Eigene Feldnamen, neues Feld „Gesamtzeit“, Pause als Zusatzzeile
