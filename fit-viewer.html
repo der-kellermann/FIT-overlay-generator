@@ -1,4 +1,24 @@
 <!DOCTYPE html>
+<!--
+  Track Viewer - Video Overlay Website
+  Copyright (C) 2026 der-kellermann
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+  SPDX-License-Identifier: AGPL-3.0-or-later
+  Externe Bibliotheken (werden von einem CDN geladen, nicht mitgeliefert): SortableJS (MIT), html2canvas (MIT).
+-->
 <html lang="de">
 <head>
 <meta charset="utf-8">
@@ -481,12 +501,12 @@
     </div>
   </div>
 </main>
-<footer class="foot">Track Viewer · Version <span id="appVersion"></span> · Vibe-Coding-Projekt, ohne Gewähr</footer>
+<footer class="foot">Track Viewer · Version <span id="appVersion"></span> · Lizenz AGPL-3.0 · Vibe-Coding-Projekt, ohne Gewähr</footer>
 
 <script>
 // Version = "alpha_" + Datum des letzten GitHub-Uploads (JJJJMMTT, ISO 8601) + "_" + laufende Nummer der Uploads an diesem Tag (01, 02, ...).
 // Bei jedem Upload hier anpassen und bei GitHub einen gleichnamigen Tag/Release anlegen.
-const APP_VERSION = "alpha_20261007_01";
+const APP_VERSION = "alpha_20261007_02";
 
 // ---------- 1) FIT-Parser (minimal, nur "record"-Nachrichten) ----------
 // Basistypen: [Größe in Bytes, Lesefunktion, "ungültig"-Wert]
