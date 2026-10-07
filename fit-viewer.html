@@ -124,38 +124,56 @@
   :root[data-theme="dark"] button.secondary { color: var(--text); }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) button.secondary { color: var(--text); } }
   .btnrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0 4px; }
-  #ovWrap { margin-top: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; overflow: hidden; background: #12141b; }
-  #ovStage { position: relative; margin: 0 auto; }
-  #ovStage.checker { background-color: #1b1e27;
+  #ovWrap, #voWrap { margin-top: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; overflow: hidden; background: #12141b; }
+  #ovStage, #voStage { position: relative; margin: 0 auto; }
+  #ovStage.checker, #voStage.checker { background-color: #1b1e27;
     background-image: linear-gradient(45deg,#262a35 25%,transparent 25%),linear-gradient(-45deg,#262a35 25%,transparent 25%),
       linear-gradient(45deg,transparent 75%,#262a35 75%),linear-gradient(-45deg,transparent 75%,#262a35 75%);
     background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
-  #ovScaler { position: absolute; top: 0; left: 0; transform-origin: top left; }
+  #ovScaler, #voScaler { position: absolute; top: 0; left: 0; transform-origin: top left; }
   #ovTarget { width: 1920px; height: 1080px; box-sizing: border-box; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 48px; padding: 64px; background: #0f1117; color: #f4f5f7;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  #ovTarget .ov-head { font-size: 36px; font-weight: 600; text-align: center; }
-  #ovTarget .ov-head:empty { display: none; }
-  #ovTarget .ov-hero { display: flex; justify-content: center; gap: 64px; flex-wrap: wrap; width: 100%; }
-  #ovTarget .ov-hero:empty, #ovTarget .ov-grid:empty { display: none; }
-  #ovTarget .ov-stat { text-align: center; min-width: 0; }
-  #ovTarget .ov-label { color: #f97316; font-weight: 600; font-size: 20px; margin-bottom: 6px; }
-  #ovTarget .ov-value { font-size: 130px; font-weight: 700; line-height: 1; display: flex; align-items: baseline; justify-content: center; gap: .11em; }
-  #ovTarget .ov-unit { font-size: .277em; font-weight: 500; color: #8b90a0; }
-  #ovTarget .ov-div { font-size: .346em; color: #8b90a0; }
-  #ovTarget .ov-total { font-size: .4em; font-weight: 600; color: #8b90a0; }
-  #ovTarget .ov-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; }
-  #ovTarget .ov-row { display: grid; gap: 20px; width: 100%; }
-  #ovTarget .ov-hero--3 .ov-value { font-size: 100px; }
-  #ovTarget .ov-stat .ov-sub { font-size: 24px; margin-top: 6px; }
-  #ovTarget .ov-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 12px;
+  :is(#ovTarget, #voTarget) .ov-head { font-size: 36px; font-weight: 600; text-align: center; }
+  :is(#ovTarget, #voTarget) .ov-head:empty { display: none; }
+  :is(#ovTarget, #voTarget) .ov-hero { display: flex; justify-content: center; gap: 64px; flex-wrap: wrap; width: 100%; }
+  :is(#ovTarget, #voTarget) .ov-hero:empty, :is(#ovTarget, #voTarget) .ov-grid:empty { display: none; }
+  :is(#ovTarget, #voTarget) .ov-stat { text-align: center; min-width: 0; }
+  :is(#ovTarget, #voTarget) .ov-label { color: #f97316; font-weight: 600; font-size: 20px; margin-bottom: 6px; }
+  :is(#ovTarget, #voTarget) .ov-value { font-size: 130px; font-weight: 700; line-height: 1; display: flex; align-items: baseline; justify-content: center; gap: .11em; }
+  :is(#ovTarget, #voTarget) .ov-unit { font-size: .277em; font-weight: 500; color: #8b90a0; }
+  :is(#ovTarget, #voTarget) .ov-div { font-size: .346em; color: #8b90a0; }
+  :is(#ovTarget, #voTarget) .ov-total { font-size: .4em; font-weight: 600; color: #8b90a0; }
+  :is(#ovTarget, #voTarget) .ov-grid { display: flex; flex-direction: column; gap: 20px; width: 100%; }
+  :is(#ovTarget, #voTarget) .ov-row { display: grid; gap: 20px; width: 100%; }
+  :is(#ovTarget, #voTarget) .ov-hero--3 .ov-value { font-size: 100px; }
+  :is(#ovTarget, #voTarget) .ov-stat .ov-sub { font-size: 24px; margin-top: 6px; }
+  :is(#ovTarget, #voTarget) .ov-card { display: flex; flex-direction: column; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 12px;
     padding: 20px 22px; text-align: center; min-width: 0; }
-  #ovTarget .ov-card .ov-label { font-size: 16px; }
-  #ovTarget .ov-card .ov-value { font-size: 44px; gap: .18em; }
-  #ovTarget .ov-card .ov-unit { font-size: .386em; }
-  #ovTarget .ov-card .ov-div { font-size: .477em; }
-  #ovTarget .ov-card .ov-total { font-size: .545em; }
-  #ovTarget .ov-sub { color: #8b90a0; font-size: 15px; margin-top: 4px; }
+  :is(#ovTarget, #voTarget) .ov-card .ov-label { font-size: 16px; }
+  :is(#ovTarget, #voTarget) .ov-card .ov-value { font-size: 44px; gap: .18em; margin-top: auto; }   /* Wert sitzt unten, Beschriftung oben */
+  :is(#ovTarget, #voTarget) .ov-card .ov-unit { font-size: .386em; }
+  :is(#ovTarget, #voTarget) .ov-card .ov-div { font-size: .477em; }
+  :is(#ovTarget, #voTarget) .ov-card .ov-total { font-size: .545em; }
+  :is(#ovTarget, #voTarget) .ov-sub { color: #8b90a0; font-size: 15px; margin-top: 4px; }
+
+  /* Video-Overlay (1/3) */
+  #voTarget { position: relative; width: 1920px; height: 1080px; color: #f4f5f7;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #voPanel { position: absolute; top: 0; bottom: 0; width: 480px; box-sizing: border-box; padding: 56px 40px;
+    display: flex; flex-direction: column; gap: 22px; }
+  #voTarget.side-left #voPanel { left: 0; }
+  #voTarget.side-right #voPanel { right: 0; }
+  #voTarget .vo-head { font-size: 34px; font-weight: 700; line-height: 1.15; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
+  #voTarget.w-narrow #voPanel { width: 384px; }   /* 1/5 */
+  #voTarget.w-normal #voPanel { width: 480px; }   /* 1/4 */
+  #voTarget.w-wide   #voPanel { width: 640px; }   /* 1/3 */
+  #voTarget.w-narrow .vo-head { font-size: 30px; }
+  #voTarget.w-wide .vo-head { font-size: 38px; }
+  #voTarget .vo-head:empty { display: none; }
+  #voTarget .ov-grid, #voTarget .ov-row { gap: 16px; }
+  #voTarget .ov-card { background: rgba(15,17,23,.68); text-align: left; padding: 14px 20px; }
+  #voTarget .ov-card .ov-value { justify-content: flex-start; }
   /* Format 1:1 (1080 x 1080) */
   #ovTarget.f-1x1 { width: 1080px; height: 1080px; padding: 56px; gap: 36px; }
   #ovTarget.f-1x1 .ov-head { font-size: 32px; }
@@ -216,9 +234,10 @@
   <div class="content">
     <div class="tabs" role="tablist" aria-label="Bereiche">
       <button type="button" class="tab" role="tab" id="tabRaw" aria-controls="panelRaw" aria-selected="true">Rohdaten</button>
-      <button type="button" class="tab" role="tab" id="tabOv" aria-controls="panelOv" aria-selected="false" tabindex="-1">Overlay</button>
+      <button type="button" class="tab" role="tab" id="tabOv" aria-controls="panelOv" aria-selected="false" tabindex="-1">Fullscreen</button>
+      <button type="button" class="tab" role="tab" id="tabVo" aria-controls="panelVo" aria-selected="false" tabindex="-1">Seitenleiste</button>
     </div>
-    <p id="emptyState" class="muted">Lade links eine FIT- oder GPX-Datei, um die Rohdaten und den Overlay-Generator zu nutzen.</p>
+    <p id="emptyState" class="muted">Lade links eine FIT- oder GPX-Datei, um die Rohdaten, das Fullscreen-Overlay und die Seitenleiste zu nutzen.</p>
     <div id="panelRaw" role="tabpanel" aria-labelledby="tabRaw">
         <div id="actions" class="actions hidden"><button id="csvBtn" type="button">Alle Zeilen als CSV herunterladen</button></div>
         <div id="range" class="range hidden">
@@ -247,7 +266,8 @@
             <label>Angabe als
               <select id="sMode">
                 <option value="clock">Uhrzeit</option>
-                <option value="dur">Aktivitätsdauer</option>
+                <option value="dur">Zeit nach Start</option>
+                <option value="km">Kilometermarke</option>
               </select>
             </label>
             <label>Von <input id="sFrom" type="text" inputmode="numeric" autocomplete="off"></label>
@@ -260,8 +280,8 @@
           <div id="sNote" class="muted"></div>
         </section>
         <section id="overlay" class="summary hidden">
-          <h2>Overlay erzeugen (Test)</h2>
-          <p class="muted">Die Werte der Zusammenfassung werden automatisch übernommen. Das Layout stellst du unten im Schema ein, Werte und Namen kannst du in der Tabelle überschreiben. Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, das Overlay addiert den heutigen Wert.</p>
+          <h2>Fullscreen</h2>
+          <p class="muted">Ein Overlay in voller Bildgröße, z. B. für Endcards und Instagram-Beiträge. Die Werte der Zusammenfassung oben werden automatisch übernommen. Das Layout stellst du unten im Schema ein, Werte und Namen kannst du in der Tabelle überschreiben. Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, das Overlay addiert den heutigen Wert.</p>
           <div class="range">
             <label>Titel (optional) <input id="ovTitle" type="text" placeholder="z. B. Tag 3" style="width:16em" autocomplete="off"></label>
             <label>Format
@@ -301,6 +321,74 @@
               <div class="ov-head" id="ovHead"></div>
               <div class="ov-hero" id="ovHero"></div>
               <div class="ov-grid" id="ovGrid"></div>
+            </div></div></div>
+          </div>
+        </section>
+    </div>
+    <div id="panelVo" role="tabpanel" aria-labelledby="tabVo" hidden>
+        <section id="vo" class="summary hidden">
+          <h2>Seitenleiste</h2>
+          <p class="muted">Die Seitenleiste ist ein Overlay für den linken oder rechten Rand eines Videos, wahlweise ein Fünftel, ein Viertel oder ein Drittel breit. Es zeigt die Werte vom Start der Aktivität bis zu einem gewählten Zeitpunkt. Der Export ist zunächst ein Standbild: ein PNG in voller Bildgröße mit transparentem Hintergrund, das du in deinem Schnittprogramm über das Video legst.</p>
+          <div class="range">
+            <label>Überschrift <input id="voTitle" type="text" placeholder="z. B. Highlands &amp; Steel 2026 – Tag 1" style="width:22em" autocomplete="off"></label>
+            <label>Position
+              <select id="voSide"><option value="left">Links</option><option value="right">Rechts</option></select>
+            </label>
+            <label>Breite
+              <select id="voWidth">
+                <option value="narrow">Schmal (1/5)</option>
+                <option value="normal" selected>Normal (1/4)</option>
+                <option value="wide">Breit (1/3)</option>
+              </select>
+            </label>
+            <label>Auflösung (16:9)
+              <select id="voRes">
+                <option value="1280x720">720p (1280 × 720)</option>
+                <option value="1920x1080" selected>1080p (1920 × 1080)</option>
+                <option value="2560x1440">1440p (2560 × 1440)</option>
+                <option value="3840x2160">2160p (3840 × 2160)</option>
+              </select>
+            </label>
+          </div>
+          <h3 class="ovh">Zeitpunkt</h3>
+          <p class="muted">Bis zu welchem Punkt der Aktivität sollen die Werte gelten? Gezählt wird immer ab dem Start.</p>
+          <div class="range">
+            <label>Angabe als
+              <select id="voTimeMode">
+                <option value="clock">Uhrzeit</option>
+                <option value="dur" selected>Zeit nach Start</option>
+                <option value="km">Kilometermarke</option>
+              </select>
+            </label>
+            <label><span id="voTimeLabel">Zeit nach Start</span> <input id="voTimeVal" type="text" autocomplete="off"></label>
+            <button id="voTimeBtn" type="button">Übernehmen</button>
+          </div>
+          <div id="voTimeHint" class="muted"></div>
+          <div id="voTimeMsg" class="rangeMsg"></div>
+          <h3 class="ovh">Layout</h3>
+          <p class="muted">Ziehe ein Feld am Griff ⠿ in eine Zeile oder nach „Nicht angezeigt“. Pro Zeile sind höchstens 2 Felder nebeneinander erlaubt, bei der Breite „Schmal“ nur 1. Mit ◀ ▶ änderst du die Reihenfolge innerhalb einer Zeile.</p>
+          <div class="ovlayout" id="voLayout"></div>
+          <div id="voDndNote" class="rangeMsg"></div>
+          <h3 class="ovh">Werte und Namen</h3>
+          <div style="overflow-x:auto">
+            <table class="ovtable">
+              <thead><tr><th>Feld</th><th>Name im Overlay</th><th>Wert</th><th>Einheit</th><th>Summe bis Vortag</th></tr></thead>
+              <tbody id="voRows"></tbody>
+            </table>
+          </div>
+          <div class="btnrow">
+            <button id="voExport" type="button">Als PNG herunterladen</button>
+            <button id="voReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
+            <button id="voLayoutReset" type="button" class="secondary">Layout zurücksetzen</button>
+          </div>
+          <div id="voLayoutMsg" class="rangeMsg"></div>
+          <div id="voMsg" class="rangeMsg"></div>
+          <div id="voWrap">
+            <div id="voStage"><div id="voScaler"><div id="voTarget">
+              <div id="voPanel">
+                <div class="vo-head" id="voHead"></div>
+                <div class="ov-grid" id="voGrid"></div>
+              </div>
             </div></div></div>
           </div>
         </section>
@@ -666,26 +754,33 @@ function haversineKm(a, b) {
 
 function setupSummary() {
   const timed = current.rows.filter(r => r.time);
-  if (timed.length < 2) { $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); return; }
+  if (timed.length < 2) { $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); $("vo").classList.add("hidden"); return; }
   current.timed = timed;
   current.t0 = timed[0].time;
   current.t1 = timed[timed.length - 1].time;
   $("summary").classList.remove("hidden");
   fillSummaryDefaults();
   runSummary();
+  voSetup();
 }
 
 function fillSummaryDefaults() {
-  const { t0, t1 } = current, total = (t1 - t0) / 1000;
-  if ($("sMode").value === "clock") {
+  const { t0, t1 } = current, total = (t1 - t0) / 1000, mode = $("sMode").value;
+  $("sFrom").inputMode = $("sTo").inputMode = mode === "km" ? "decimal" : "numeric";
+  if (mode === "clock") {
     $("sFrom").value = clockStr(t0); $("sTo").value = clockStr(t1);
     $("sFrom").placeholder = $("sTo").placeholder = "hh:mm:ss";
+  } else if (mode === "km") {
+    const cum = voCum(), maxK = cum ? cum[cum.length - 1] : undefined;
+    $("sFrom").value = cum ? "0" : ""; $("sTo").value = cum ? nf(maxK, 2) : "";
+    $("sFrom").placeholder = $("sTo").placeholder = "km";
   } else {
     $("sFrom").value = "0:00:00"; $("sTo").value = fmtHMS(total);
     $("sFrom").placeholder = $("sTo").placeholder = "h:mm:ss";
   }
-  $("sHint").textContent = `Aufzeichnung: ${clockStr(t0)} bis ${clockStr(t1)} Uhr, Dauer ${fmtHMS(total)}. ` +
-    "Doppelpunkte sind optional: 0830 = 08:30, 083015 = 08:30:15.";
+  $("sHint").textContent = `Aufzeichnung: ${clockStr(t0)} bis ${clockStr(t1)} Uhr, Dauer ${fmtHMS(total)}` +
+    (voCum() ? `, Strecke ${nf(voCum()[voCum().length - 1], 2)} km. ` : ". ") +
+    (mode === "km" ? "Kilometer als Zahl, z. B. 0 und 20,15." : "Doppelpunkte sind optional: 0830 = 08:30, 083015 = 08:30:15.");
 }
 
 function runSummary() {
@@ -693,22 +788,37 @@ function runSummary() {
   const err = t => { $("sMsg").textContent = t; if (t) { $("sOut").innerHTML = ""; $("sNote").textContent = ""; } };
   const { timed, t0, t1 } = current;
   const total = (t1 - t0) / 1000;
-  const clock = $("sMode").value === "clock";
-  const a = parseTime($("sFrom").value), b = parseTime($("sTo").value);
-  if (a === null || b === null) return err("Bitte Von und Bis als Zeit angeben, z. B. 8:30 oder 0830 oder 1:15:00 (Doppelpunkte sind optional).");
-  if (clock && (a >= 86400 || b >= 86400)) return err("Bei einer Uhrzeit muss die Stundenangabe zwischen 0 und 23 liegen.");
+  const mode = $("sMode").value;
+  let sel;
 
-  let from = a, to = b;
-  if (clock) {   // Uhrzeit -> Sekunden seit Aktivitätsstart (auch über Mitternacht)
-    const sod0 = t0.getHours() * 3600 + t0.getMinutes() * 60 + t0.getSeconds();
-    const off = s => (((s - sod0) % 86400) + 86400) % 86400;
-    from = off(a); to = off(b);
+  if (mode === "km") {
+    const a = parseNum($("sFrom").value), b = parseNum($("sTo").value);
+    if (isNaN(a) || isNaN(b) || a < 0 || b < 0) return err("Bitte Von und Bis als Kilometer angeben, z. B. 0 und 20,15.");
+    if (b <= a) return err("„Bis“ muss größer als „Von“ sein.");
+    const cum = voCum();
+    if (!cum) return err("Diese Datei enthält weder Strecken- noch Positionsdaten, deshalb ist keine Kilometerangabe möglich.");
+    const maxK = cum[cum.length - 1];
+    if (a > maxK + 0.05 || b > maxK + 0.05) return err(`Die Aktivität ist nur ${nf(maxK, 2)} km lang.`);
+    let i0 = cum.findIndex(v => v >= a - 1e-9); if (i0 < 0) i0 = cum.length - 1;
+    let i1 = cum.findIndex(v => v >= b - 1e-9); if (i1 < 0) i1 = cum.length - 1;
+    sel = timed.slice(i0, i1 + 1);
+  } else {
+    const clock = mode === "clock";
+    const a = parseTime($("sFrom").value), b = parseTime($("sTo").value);
+    if (a === null || b === null) return err("Bitte Von und Bis als Zeit angeben, z. B. 8:30 oder 0830 oder 1:15:00 (Doppelpunkte sind optional).");
+    if (clock && (a >= 86400 || b >= 86400)) return err("Bei einer Uhrzeit muss die Stundenangabe zwischen 0 und 23 liegen.");
+    let from = a, to = b;
+    if (clock) {   // Uhrzeit -> Sekunden seit Aktivitätsstart (auch über Mitternacht)
+      const sod0 = t0.getHours() * 3600 + t0.getMinutes() * 60 + t0.getSeconds();
+      const off = s => (((s - sod0) % 86400) + 86400) % 86400;
+      from = off(a); to = off(b);
+    }
+    if (to <= from) return err("„Bis“ muss nach „Von“ liegen.");
+    if (from > total + 0.5 || to > total + 0.5) {
+      return err(`Der Zeitraum liegt außerhalb der Aufzeichnung (${clockStr(t0)} bis ${clockStr(t1)} Uhr bzw. Dauer 0:00:00 bis ${fmtHMS(total)}).`);
+    }
+    sel = timed.filter(r => { const e = (r.time - t0) / 1000; return e >= from - 0.001 && e <= to + 0.001; });
   }
-  if (to <= from) return err("„Bis“ muss nach „Von“ liegen.");
-  if (from > total + 0.5 || to > total + 0.5) {
-    return err(`Der Zeitraum liegt außerhalb der Aufzeichnung (${clockStr(t0)} bis ${clockStr(t1)} Uhr bzw. Dauer 0:00:00 bis ${fmtHMS(total)}).`);
-  }
-  const sel = timed.filter(r => { const e = (r.time - t0) / 1000; return e >= from - 0.001 && e <= to + 0.001; });
   if (sel.length < 2) return err("In diesem Zeitraum liegen weniger als 2 Datenpunkte. Bitte einen größeren Zeitraum wählen.");
   err("");
   renderSummary(sel);
@@ -858,6 +968,7 @@ function renderSummary(sel) {
 
 $("sBtn").addEventListener("click", runSummary);
 ["sFrom", "sTo"].forEach(id => $(id).addEventListener("blur", () => {
+  if ($("sMode").value === "km") return;
   const sec = parseTime($(id).value);
   if (sec === null) return;
   const clock = $("sMode").value === "clock";
@@ -984,7 +1095,7 @@ const OV_LAYOUT_DEFAULTS = {
 };
 const ovLayouts = {};   // gemerkte Layouts je Format
 const OV_ZONES = [["hero", "Hauptfelder (max. 3)"], ["1", "Zeile 1"], ["2", "Zeile 2"], ["3", "Zeile 3"], ["4", "Zeile 4"], ["off", "Nicht angezeigt"]];
-const zoneOf = id => document.querySelector(`.chip[data-id="${id}"]`).parentElement.dataset.zone;
+const zoneOf = id => document.querySelector(`#ovLayout .chip[data-id="${id}"]`).parentElement.dataset.zone;
 const zoneIds = z => [...$("ovZone_" + z).children].map(c => c.dataset.id);   // Reihenfolge = Reihenfolge im Overlay
 
 function buildOverlay() {
@@ -1069,7 +1180,7 @@ function applyLayout(layout) {
   const placed = new Set();
   for (const [z] of OV_ZONES) {
     for (const id of layout[z] || []) {
-      const chip = document.querySelector(`.chip[data-id="${id}"]`);
+      const chip = document.querySelector(`#ovLayout .chip[data-id="${id}"]`);
       if (!chip || placed.has(id)) continue;
       $("ovZone_" + z).appendChild(chip);
       placed.add(id);
@@ -1154,8 +1265,8 @@ function fitOverlay() {
 }
 
 // Zu breite Werte schrittweise verkleinern, damit nichts über den Kartenrand hinausragt
-function fitOverlayText() {
-  document.querySelectorAll("#ovTarget .ov-value").forEach(v => {
+function fitOverlayText(selector = "#ovTarget .ov-value") {
+  document.querySelectorAll(selector).forEach(v => {
     v.style.fontSize = "";
     let size = parseFloat(getComputedStyle(v).fontSize), guard = 0;
     while (v.scrollWidth > v.clientWidth + 1 && size > 14 && guard++ < 80) {
@@ -1198,7 +1309,7 @@ async function exportOverlay() {
     }
     const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
     if (!blob) throw new Error("Das Bild konnte nicht erzeugt werden (evtl. zu groß für dieses Gerät). Bitte eine kleinere Auflösung wählen.");
-    const name = `zusammenfassung-${ovFormat}-${w}x${h}.png`;
+    const name = `fullscreen-${ovFormat}-${w}x${h}.png`;
     const err = await saveFile(name, blob, "image/png");
     if (err) msgEl.textContent = err;
   } catch (e) {
@@ -1219,8 +1330,353 @@ $("ovExport").addEventListener("click", exportOverlay);
 window.addEventListener("resize", fitOverlay);
 initLayout();
 
-// ---------- Reiter (Rohdaten / Overlay) ----------
-const TABS = [["tabRaw", "panelRaw"], ["tabOv", "panelOv"]];
+// ---------- Video-Overlay (1/3) ----------
+const VO_FIELDS = [
+  { id: "strecke",  label: "Strecke",              unit: "km",   sum: "num" },
+  { id: "anstieg",  label: "Anstieg",              unit: "Hm",   sum: "num" },
+  { id: "zeit",     label: "Bewegungszeit",        unit: "",     sum: "time" },
+  { id: "pause",    label: "Pause",                unit: "",     sum: "time" },
+  { id: "gesamt",   label: "Gesamtzeit",           unit: "",     sum: "time" },
+  { id: "avgSpeed", label: "Ø Geschwindigkeit",    unit: "km/h" },
+  { id: "maxSpeed", label: "Max. Geschwindigkeit", unit: "km/h" },
+  { id: "avgHr",    label: "Ø Herzfrequenz",       unit: "bpm" },
+  { id: "maxHr",    label: "Max. Herzfrequenz",    unit: "bpm" },
+  { id: "kcal",     label: "Kalorienverbrauch",    unit: "kcal", sum: "num" },
+  { id: "avgPower", label: "Ø Leistung",           unit: "W" },
+  { id: "maxPower", label: "Max. Leistung",        unit: "W" },
+  { id: "avgCad",   label: "Ø Kadenz",             unit: "rpm" },
+  { id: "altMax",   label: "Höchster Punkt",       unit: "m" },
+];
+const VO_ROWS = 7;       // Zeilen im Schema
+const VO_WIDTHS = { narrow: { label: "Schmal", max: 1 }, normal: { label: "Normal", max: 2 }, wide: { label: "Breit", max: 2 } };
+const voMaxPerRow = () => VO_WIDTHS[$("voWidth").value].max;
+const VO_ZONES = [...Array(VO_ROWS)].map((_, i) => [String(i + 1), "Zeile " + (i + 1)]).concat([["off", "Nicht angezeigt"]]);
+const VO_DEFAULT_LAYOUT = {
+  1: ["strecke"], 2: ["anstieg"], 3: ["zeit"], 4: ["pause"], 5: ["avgSpeed", "maxSpeed"], 6: ["avgHr", "maxHr"], 7: ["kcal"],
+  off: ["gesamt", "avgPower", "maxPower", "avgCad", "altMax"],
+};
+let voError = "";
+
+const voField = id => VO_FIELDS.find(f => f.id === id);
+const voChip = id => document.querySelector(`#voLayout .chip[data-id="${id}"]`);
+const voZoneOf = id => voChip(id).parentElement.dataset.zone;
+const voZoneIds = z => [...$("voZone_" + z).children].map(c => c.dataset.id);
+
+(function initVoTable() {
+  const tb = $("voRows");
+  for (const f of VO_FIELDS) {
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      `<td>${f.label}</td>` +
+      `<td><input type="text" id="voName_${f.id}" autocomplete="off" placeholder="${f.label}" aria-label="Eigener Name für ${f.label}"></td>` +
+      `<td><input type="text" id="voVal_${f.id}" autocomplete="off"></td>` +
+      `<td class="unit">${f.unit}<span class="na" id="voNa_${f.id}"></span></td>` +
+      `<td>${f.sum ? `<input type="text" id="voSum_${f.id}" inputmode="${f.sum === "time" ? "numeric" : "decimal"}" autocomplete="off" placeholder="optional">` : ""}</td>`;
+    tb.appendChild(tr);
+    tr.querySelectorAll("input[type=text]").forEach(i => i.addEventListener("input", voBuild));
+  }
+})();
+
+// Werte wie im Overlay-Reiter, nur die Strecke mit zwei Nachkommastellen
+function voValues(d) {
+  const v = overlayValues(d);
+  if (d.km !== undefined) v.strecke = nfp(d.km, 2);
+  return v;
+}
+
+function voApplyValues(vals) {
+  current.voVals = vals;                      // für "Auf Dateiwerte zurücksetzen"
+  for (const f of VO_FIELDS) {
+    $("voVal_" + f.id).value = vals[f.id];
+    $("voNa_" + f.id).textContent = vals[f.id] === "" ? "nicht in Datei" : "";
+  }
+  voBuild();
+}
+
+function voFill(d) { voApplyValues(voValues(d)); }
+
+// Startpunkt (0 km bzw. 0:00:00): alle Werte auf 0, Herzfrequenz und Höchster Punkt auf "-".
+// Felder, die in der Datei gar nicht vorkommen, bleiben leer.
+function voFillZero() {
+  const total = (current.t1 - current.t0) / 1000;
+  if (!current.fullSummary) current.fullSummary = computeSummary(current.timed, total);
+  const have = voValues(current.fullSummary);
+  const zero = { strecke: "0,00", anstieg: "0", zeit: "0:00:00", pause: "0:00:00", gesamt: "0:00:00",
+    avgSpeed: "0,0", maxSpeed: "0,0", avgHr: "-", maxHr: "-", kcal: "0",
+    avgPower: "0", maxPower: "0", avgCad: "0", altMax: "-" };
+  const vals = {};
+  for (const f of VO_FIELDS) vals[f.id] = have[f.id] !== "" ? zero[f.id] : "";
+  voApplyValues(vals);
+}
+
+function voBuild() {
+  const get = id => {
+    const val = $("voVal_" + id).value.trim();
+    return { on: voZoneOf(id) !== "off" && val !== "", val, sum: $("voSum_" + id) ? $("voSum_" + id).value.trim() : "" };
+  };
+  const nameOf = f => $("voName_" + f.id).value.trim() || f.label;
+  const totalOf = (f, g) => {      // Summe bis Vortag + Wert bis zum gewählten Zeitpunkt
+    if (!f.sum || !g.sum) return "";
+    if (f.sum === "time") {
+      const a = parseTime(g.sum), b = parseTime(g.val);
+      return a === null || b === null ? "" : fmtHMS(a + b);
+    }
+    const a = parseNum(g.sum), b = parseNum(g.val);
+    return isNaN(a) || isNaN(b) ? "" : nfp(a + b, (g.val.split(",")[1] || "").length);
+  };
+  const fieldsIn = z => voZoneIds(z).map(voField).filter(f => get(f.id).on);
+
+  document.querySelectorAll("#voLayout .chip").forEach(c => {     // Chips im Schema aktuell halten
+    const f = voField(c.dataset.id);
+    c.querySelector(".chip-label").textContent = nameOf(f);
+    c.classList.toggle("nodata", $("voVal_" + f.id).value.trim() === "");
+  });
+
+  $("voHead").textContent = $("voTitle").value.trim();
+  $("voGrid").innerHTML = "";
+
+  voError = "";
+  for (const [z] of VO_ZONES) {
+    if (z === "off") continue;
+    const fs = fieldsIn(z);
+    if (fs.length > voMaxPerRow()) {
+      const max = voMaxPerRow(), w = VO_WIDTHS[$("voWidth").value].label;
+      voError = `Zu viele Felder nebeneinander: In Zeile ${z} stehen ${fs.length} Felder (${fs.map(nameOf).join(", ")}). Bei der Breite „${w}“ ist höchstens ${max} ${max === 1 ? "Feld" : "Felder"} pro Zeile erlaubt. ` +
+        "Das Overlay wird nicht erzeugt. Verschiebe ein Feld in eine andere Zeile oder nach „Nicht angezeigt“" + (max === 1 ? " oder wähle eine größere Breite." : ".");
+      break;
+    }
+  }
+  $("voLayoutMsg").textContent = voError;
+  document.querySelectorAll("#voLayout .zone").forEach(z => {
+    z.classList.toggle("over", !!voError && z.dataset.zone !== "off" && fieldsIn(z.dataset.zone).length > voMaxPerRow());
+  });
+  if (!$("voExport").dataset.busy) $("voExport").disabled = !!voError;
+
+  if (!voError) {
+    for (const [z] of VO_ZONES) {
+      if (z === "off") continue;
+      const fs = fieldsIn(z);
+      if (!fs.length) continue;
+      const row = el("div", "ov-row");
+      row.style.gridTemplateColumns = `repeat(${fs.length}, 1fr)`;
+      fs.forEach(f => {
+        const g = get(f.id);
+        row.appendChild(ovBlock("card", nameOf(f), g.val, f.unit, totalOf(f, g), ""));
+      });
+      $("voGrid").appendChild(row);
+    }
+  }
+  $("voTarget").className = "side-" + $("voSide").value + " w-" + $("voWidth").value;
+  $("voStage").classList.add("checker");
+  fitVo();
+  fitOverlayText("#voTarget .ov-value");
+}
+
+function fitVo() {
+  const f = Math.min(1, Math.max(0.05, ($("voWrap").clientWidth - 22) / 1920));
+  $("voStage").style.width = Math.round(1920 * f) + "px";
+  $("voStage").style.height = Math.round(1080 * f) + "px";
+  $("voScaler").style.transform = `scale(${f})`;
+}
+
+// ----- Layout-Schema (Drag & Drop) -----
+function voCaptureApply(layout) {
+  const placed = new Set();
+  for (const [z] of VO_ZONES) {
+    for (const id of layout[z] || []) {
+      const chip = voChip(id);
+      if (!chip || placed.has(id)) continue;
+      $("voZone_" + z).appendChild(chip);
+      placed.add(id);
+    }
+  }
+  document.querySelectorAll("#voLayout .chip").forEach(c => { if (!placed.has(c.dataset.id)) $("voZone_off").appendChild(c); });
+  voBuild();
+}
+
+function voInitLayout() {
+  const root = $("voLayout");
+  for (const [z, title] of VO_ZONES) {
+    const row = el("div", "zrow");
+    row.appendChild(el("div", "ztitle", title));
+    const zone = el("div", "zone");
+    zone.id = "voZone_" + z; zone.dataset.zone = z;
+    row.appendChild(zone); root.appendChild(row);
+  }
+  for (const f of VO_FIELDS) {
+    const chip = el("div", "chip"); chip.dataset.id = f.id;
+    const grip = el("span", "grip", "⠿"); grip.title = "Zum Verschieben ziehen";
+    chip.appendChild(grip);
+    chip.appendChild(el("span", "chip-label", f.label));
+    for (const [dir, sym, lab] of [[-1, "◀", "Nach links"], [1, "▶", "Nach rechts"]]) {
+      const b = el("button", "mv", sym);
+      b.type = "button"; b.dataset.dir = dir; b.setAttribute("aria-label", lab + " verschieben: " + f.label);
+      chip.appendChild(b);
+    }
+    $("voZone_off").appendChild(chip);
+  }
+  root.addEventListener("click", e => {
+    const b = e.target.closest("button.mv");
+    if (!b) return;
+    const chip = b.closest(".chip"), dir = +b.dataset.dir;
+    const sib = dir < 0 ? chip.previousElementSibling : chip.nextElementSibling;
+    if (!sib) return;
+    if (dir < 0) chip.parentElement.insertBefore(chip, sib); else chip.parentElement.insertBefore(sib, chip);
+    voBuild();
+  });
+  if (typeof Sortable !== "undefined") {
+    root.querySelectorAll(".zone").forEach(z => Sortable.create(z, {
+      group: "volayout", animation: 150, handle: ".grip",
+      forceFallback: true, fallbackOnBody: true, fallbackTolerance: 3, fallbackClass: "chip-drag",
+      ghostClass: "chip-ghost", emptyInsertThreshold: 24,
+      onSort: voBuild
+    }));
+  } else {
+    $("voDndNote").textContent = "Drag & Drop konnte nicht geladen werden (Internetverbindung prüfen). Mit ◀ ▶ kannst du Felder innerhalb einer Zeile verschieben.";
+  }
+  voCaptureApply(VO_DEFAULT_LAYOUT);
+}
+
+// ----- Zeitpunkt wählen -----
+function voCum() {            // Strecke (km) bis zu jedem Messpunkt, für die Kilometermarke
+  if (current.cum !== undefined) return current.cum;
+  const t = current.timed;
+  let cum = null;
+  if (t.some(r => r.dist !== undefined)) {
+    cum = []; let last = 0;
+    for (const r of t) { if (r.dist !== undefined) last = r.dist; cum.push(last); }
+  } else if (t.some(r => r.lat !== undefined && r.lon !== undefined)) {
+    cum = []; let d = 0, prev = null;
+    for (const r of t) {
+      if (r.lat !== undefined && r.lon !== undefined) { if (prev) d += haversineKm(prev, r); prev = r; }
+      cum.push(d);
+    }
+  }
+  current.cum = cum;
+  return cum;
+}
+
+function voModeUi() {
+  const mode = $("voTimeMode").value;
+  $("voTimeLabel").textContent = mode === "clock" ? "Uhrzeit (hh:mm:ss)" : mode === "km" ? "Kilometer" : "Zeit (h:mm:ss)";
+  $("voTimeVal").inputMode = mode === "km" ? "decimal" : "numeric";
+}
+
+function voFillTimeDefault() {       // Standard: Ende der Aktivität
+  const { t0, t1 } = current, total = (t1 - t0) / 1000, mode = $("voTimeMode").value;
+  if (mode === "clock") $("voTimeVal").value = clockStr(t1);
+  else if (mode === "km") { const c = voCum(); $("voTimeVal").value = c ? nf(c[c.length - 1], 2) : ""; }
+  else $("voTimeVal").value = fmtHMS(total);
+}
+
+function voRun() {
+  if (!current || !current.timed) return;
+  const err = t => { $("voTimeMsg").textContent = t; };
+  const { timed, t0, t1 } = current, total = (t1 - t0) / 1000;
+  const mode = $("voTimeMode").value, raw = $("voTimeVal").value;
+  let sel;
+
+  if (mode === "km") {
+    const K = parseNum(raw);
+    if (isNaN(K) || K < 0) return err("Bitte eine Kilometermarke als Zahl angeben, z. B. 20,15 (oder 0 für den Start).");
+    const cum = voCum();
+    if (!cum) return err("Diese Datei enthält weder Strecken- noch Positionsdaten, deshalb ist keine Kilometermarke möglich.");
+    const maxK = cum[cum.length - 1];
+    if (K > maxK + 0.05) return err(`Die Aktivität ist nur ${nf(maxK, 2)} km lang.`);
+    let i = cum.findIndex(v => v >= K - 1e-9);
+    if (i < 0) i = cum.length - 1;
+    sel = timed.slice(0, i + 1);
+  } else {
+    const a = parseTime(raw);
+    if (a === null) return err("Bitte eine Zeit angeben, z. B. 1:15:00 oder 011500 (Doppelpunkte sind optional).");
+    let T = a;
+    if (mode === "clock") {
+      if (a >= 86400) return err("Bei einer Uhrzeit muss die Stundenangabe zwischen 0 und 23 liegen.");
+      const sod0 = t0.getHours() * 3600 + t0.getMinutes() * 60 + t0.getSeconds();
+      T = (((a - sod0) % 86400) + 86400) % 86400;
+    }
+    if (T > total + 0.5) return err(`Der Zeitpunkt liegt außerhalb der Aufzeichnung (${clockStr(t0)} bis ${clockStr(t1)} Uhr bzw. Dauer 0:00:00 bis ${fmtHMS(total)}).`);
+    sel = timed.filter(r => (r.time - t0) / 1000 <= T + 0.001);
+  }
+  err("");
+  if (sel.length < 2) {              // Start der Aktivität: noch nichts gefahren
+    $("voTimeHint").textContent = `Gewählter Punkt: Start der Aktivität (${clockStr(t0)} Uhr, 0:00:00 nach Start, 0,00 km). Alle Werte stehen auf 0, die Herzfrequenz auf „-“.`;
+    voFillZero();
+    return;
+  }
+
+  const d = computeSummary(sel, total);
+  $("voTimeHint").textContent = `Gewählter Punkt: ${clockStr(d.to)} Uhr, ${fmtHMS(d.dur)} nach Start` + (d.km !== undefined ? `, ${nf(d.km, 2)} km` : "") + ".";
+  voFill(d);
+}
+
+function voSetup() {
+  $("vo").classList.remove("hidden");
+  voModeUi();
+  voFillTimeDefault();
+  voRun();
+}
+
+// ----- Export -----
+async function voExportPng() {
+  const msgEl = $("voMsg"), btn = $("voExport");
+  msgEl.textContent = "";
+  if (voError) { msgEl.textContent = voError; return; }
+  if (typeof html2canvas === "undefined") { msgEl.textContent = "Die Export-Bibliothek konnte nicht geladen werden (Internetverbindung prüfen)."; return; }
+  const [w, h] = $("voRes").value.split("x").map(Number);
+  btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = "Exportiere …";
+  try {
+    let canvas = await html2canvas($("voTarget"), {
+      backgroundColor: null,            // transparent
+      scale: w / 1920, width: 1920, height: 1080, useCORS: true,
+      onclone: doc => {
+        doc.getElementById("voScaler").style.transform = "none";
+        doc.getElementById("voStage").style.width = "1920px";
+        doc.getElementById("voStage").style.height = "1080px";
+        doc.getElementById("voStage").classList.remove("checker");
+        doc.getElementById("voWrap").style.overflow = "visible";
+      }
+    });
+    if (canvas.width !== w || canvas.height !== h) {
+      const c2 = document.createElement("canvas");
+      c2.width = w; c2.height = h;
+      c2.getContext("2d").drawImage(canvas, 0, 0, w, h);
+      canvas = c2;
+    }
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    if (!blob) throw new Error("Das Bild konnte nicht erzeugt werden (evtl. zu groß für dieses Gerät). Bitte eine kleinere Auflösung wählen.");
+    const err = await saveFile(`seitenleiste-${$("voSide").value === "left" ? "links" : "rechts"}-${w}x${h}.png`, blob, "image/png");
+    if (err) msgEl.textContent = err;
+  } catch (e) {
+    msgEl.textContent = "Export fehlgeschlagen: " + e.message;
+  } finally {
+    delete btn.dataset.busy; btn.disabled = !!voError; btn.textContent = "Als PNG herunterladen";
+  }
+}
+
+// ----- Verdrahtung -----
+$("voTitle").addEventListener("input", voBuild);
+$("voSide").addEventListener("change", voBuild);
+$("voWidth").addEventListener("change", voBuild);
+$("voTimeBtn").addEventListener("click", voRun);
+$("voTimeVal").addEventListener("keydown", e => { if (e.key === "Enter") voRun(); });
+$("voTimeVal").addEventListener("blur", () => {
+  if ($("voTimeMode").value === "km") return;
+  const sec = parseTime($("voTimeVal").value);
+  if (sec === null) return;
+  const clock = $("voTimeMode").value === "clock";
+  if (clock && sec >= 86400) return;
+  $("voTimeVal").value = clock ? `${pad2(Math.floor(sec / 3600))}:${pad2(Math.floor(sec % 3600 / 60))}:${pad2(sec % 60)}` : fmtHMS(sec);
+});
+$("voTimeMode").addEventListener("change", () => { voModeUi(); if (current && current.timed) { voFillTimeDefault(); voRun(); } });
+$("voReset").addEventListener("click", () => { if (current && current.voVals) voApplyValues(current.voVals); });
+$("voLayoutReset").addEventListener("click", () => voCaptureApply(VO_DEFAULT_LAYOUT));
+$("voExport").addEventListener("click", voExportPng);
+window.addEventListener("resize", fitVo);
+voInitLayout();
+
+// ---------- Reiter (Rohdaten / Overlay / Video-Overlay) ----------
+const TABS = [["tabRaw", "panelRaw"], ["tabOv", "panelOv"], ["tabVo", "panelVo"]];
 function setTab(tabId) {
   for (const [t, p] of TABS) {
     const on = t === tabId;
@@ -1228,7 +1684,8 @@ function setTab(tabId) {
     $(t).tabIndex = on ? 0 : -1;
     $(p).hidden = !on;
   }
-  if (tabId === "tabOv") { fitOverlay(); fitOverlayText(); }   // Größe neu berechnen, solange der Reiter sichtbar ist
+  if (tabId === "tabOv") { fitOverlay(); fitOverlayText(); }
+  if (tabId === "tabVo") { fitVo(); fitOverlayText("#voTarget .ov-value"); }   // Größe neu berechnen, solange der Reiter sichtbar ist
 }
 TABS.forEach(([t], i) => {
   $(t).addEventListener("click", () => setTab(t));
@@ -1250,7 +1707,7 @@ async function handle(file) {
     const isGpx = file.name.toLowerCase().endsWith(".gpx");
     show(isGpx ? parseGpx(await file.text()) : parseFit(await file.arrayBuffer()), file.name);
   } catch (e) {
-    $("stats").classList.add("hidden"); $("tablewrap").classList.add("hidden"); $("actions").classList.add("hidden"); $("range").classList.add("hidden"); $("rangeMsg").textContent = ""; $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); $("emptyState").classList.remove("hidden");
+    $("stats").classList.add("hidden"); $("tablewrap").classList.add("hidden"); $("actions").classList.add("hidden"); $("range").classList.add("hidden"); $("rangeMsg").textContent = ""; $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); $("vo").classList.add("hidden"); $("emptyState").classList.remove("hidden");
     msg("Fehler: " + e.message, true);
   }
 }
