@@ -4,6 +4,8 @@ Ein kleines Browser-Tool, das **FIT- und GPX-Dateien** (Radfahren, Garmin, Wahoo
 
 Das Tool besteht aus **einer einzigen HTML-Datei** (`fit-viewer.html`). Es gibt keinen Server und kein Konto. Deine Dateien werden **nur lokal im Browser** verarbeitet und nirgendwohin hochgeladen.
 
+**Aktuelle Version:** `alpha_20261007_01` (steht auch im Footer der Seite)
+
 > ## ⚠️ Hinweis: Vibe-Coding-Projekt
 > Dieses Projekt ist **„vibe-coded“**: Es wurde von einem Programmier-Anfänger gemeinsam mit einer KI (Claude von Anthropic) in einem Dialog entwickelt.
 >
@@ -25,6 +27,7 @@ Ein Overlay in voller Bildgröße, gedacht für Endcards und Instagram-Beiträge
 - Formate **16:9**, **1:1** und **9:16**, Auflösung 720p bis 2160p, optional transparenter Hintergrund
 - **Layout-Schema mit Drag & Drop**: bis zu 3 Hauptfelder und 4 Zeilen, gestrichelte leere Plätze zeigen die maximale Anzahl (pro Zeile 3 Felder bei 16:9 und 1:1, 2 bei 9:16)
 - Eigene Feldnamen, Titel und „Summe bis Vortag“ (Werte der Vortage trägst du von Hand ein)
+- **Layout sichern (Backup):** im Browser speichern oder als Datei exportieren und importieren
 - Export als **PNG**
 
 ### Seitenleiste
@@ -35,22 +38,83 @@ Ein Overlay für den linken oder rechten Rand eines Videos, das die Werte eines 
 - **Overlay-Vorschau oben**, Einstellungen und Layout darunter
 - Layout-Schema mit 7 Zeilen und gestrichelten Plätzen: höchstens 2 Felder nebeneinander (bei „Schmal“ 1)
 - Eigene Überschrift, eigene Feldnamen und „Summe bis Vortag“ (grau neben dem Wert)
+- **Layout sichern (Backup)** wie im Fullscreen, mit eigenem Speicher
 - Export als **PNG** in voller Bildgröße mit transparentem Hintergrund, zum Drüberlegen im Schnittprogramm
 
 ### Rohdaten
 - Alle Messpunkte als Tabelle, mit frei wählbarem Zeilenbereich (maximal 1000 Zeilen gleichzeitig)
 - **CSV-Download** aller Zeilen
 
+## Layout-Backup
+
+In beiden Overlay-Reitern gibt es unter dem Layout-Schema den Bereich **„Layout sichern (Backup)“**. Zu jeder Funktion gibt es ein Info-Symbol **(i)** mit einer kurzen Erklärung.
+
+- **Im Browser speichern / Gespeichertes laden:** Das Layout liegt im Speicher des Browsers (`localStorage`) und wird beim nächsten Öffnen automatisch geladen. Das gilt nur für das jeweilige Gerät und den jeweiligen Browser und geht verloren, wenn die Browserdaten gelöscht werden.
+- **Als Datei exportieren:** JSON-Datei mit Datum und Uhrzeit im Namen, z. B. `trackviewer-layout-fullscreen_2026-10-07_11-52-03.json`. So lassen sich mehrere Stände aufheben und Layouts auf andere Geräte mitnehmen.
+- **Datei importieren:** Nur Backups des passenden Reiters werden angenommen. Defekte oder fremde Dateien werden abgelehnt, Inhalte werden bereinigt.
+- **Gesichert wird:** Layout, Feldnamen, Format bzw. Position und Breite, Auflösung (Fullscreen zusätzlich Hintergrund und Pause-Zusatzzeile).
+- **Nicht gesichert wird:** Titel, Werte und „Summe bis Vortag“. Es werden keine Messdaten gespeichert.
+- Ist der Browser-Speicher gesperrt (z. B. im privaten Modus), bleiben Export und Import nutzbar.
+
+### Versions-Abgleich
+Jedes Backup enthält die Version der Seite, mit der es erstellt wurde. Passt sie nicht zur geladenen Seite, erscheint eine **Fehlermeldung**: Das Layout wird so gut wie möglich angewendet, es kann aber sein, dass nicht alles wiederhergestellt wird. Die Meldung nennt die **GitHub-Version, die du für dieses Backup nutzen solltest** (bei einem älteren Backup die ältere Version, bei einem neueren Backup die neuere).
+
+## Versionen
+
+Das Schema lautet **`alpha_JJJJMMTT_NN`**:
+- `JJJJMMTT` ist das Datum des letzten GitHub-Uploads (ISO 8601)
+- `NN` ist die laufende Nummer der Uploads an diesem Tag (`01`, `02`, …)
+
+Die Version steht im Footer der Seite und in den Layout-Backups. Zu jeder Version gehört bei GitHub ein **Release mit gleichnamigem Tag**, damit sich ein älterer Stand leicht wiederfinden lässt (Repository → Releases).
+
 ## So benutzt du es
 
 1. Datei `fit-viewer.html` im Browser öffnen (oder die gehostete Seite aufrufen).
 2. Links eine **FIT- oder GPX-Datei** auswählen oder hineinziehen.
 3. Im Reiter **Fullscreen** oder **Seitenleiste** den Zeitraum wählen, das Layout anpassen und das **PNG herunterladen**.
+4. Optional: das Layout im Browser speichern oder als Datei exportieren.
 
 ## Technik und Datenschutz
 
 - Eine einzige HTML-Datei mit reinem JavaScript, ohne Build-Schritt
 - Eigener FIT-Parser (Messpunkte sowie Session- und Lap-Daten) und GPX-Parser
+- Externe Bibliotheken, jeweils mit fester Version:
+  - [SortableJS](https://sortablejs.github.io/Sortable/) 1.15.2 für Drag & Drop
+  - [html2canvas](https://html2canvas.hertzen.com/) 1.4.1 für den PNG-Export
+- **Keine Datenübertragung:** Deine FIT-/GPX-Dateien bleiben im Browser. Im Browser-Speicher liegt nur das Layout.
+- Downloads nutzen den normalen Browser-Download. In der Claude-Umgebung, in der die Seite entwickelt wird, läuft er zusätzlich über die Plattform-Funktion.
+
+## Bekannte Einschränkungen
+
+- **Höhenmeter** werden mit einer Schwelle von 3 m berechnet (Messrauschen wird ignoriert). Bei der ganzen Aktivität nutzt das Tool die Werte des Geräts, sofern vorhanden.
+- **Kalorien** speichert das Gerät nur pro Runde und gesamt. Für Teilzeiträume werden sie anteilig **geschätzt**.
+- **Bewegungszeit** zählt Zeit mit mindestens 1 km/h. Andere Plattformen rechnen anders.
+- Unterstützt werden nur **FIT und GPX** (kein TCX oder KML).
+- Der **Browser-Speicher** gilt nur pro Gerät und Browser und kann gelöscht werden oder gesperrt sein. Als Sicherung dient der Export als Datei.
+- Backups aus einer **anderen Version** der Seite können unvollständig wiederhergestellt werden.
+- Die Seitenleiste exportiert bisher nur ein **Standbild**, kein laufendes Overlay.
+
+## Geplant
+
+- Diagramm mit Zeitregler
+- Live-Overlay synchron zum Video und Export als WebM mit Transparenz
+- Mehrere Dateien auf einmal, automatische Summen über mehrere Tage
+- Design-Presets und eigene Farben
+- Weniger Scrollen im Rohdaten-Reiter
+
+## Change Index
+
+> Die Datumsangaben vor dem 7. Oktober 2026 wurden nachträglich zugeordnet und können um einen Tag abweichen. Versionsnummern gibt es seit `alpha_20261007_01`.
+
+### alpha_20261007_01 – 2026-10-07
+- **Layout-Backup** für Fullscreen und Seitenleiste, jeweils getrennt:
+  - Im Browser speichern und laden, beim Öffnen wird ein gespeichertes Layout automatisch geladen
+  - Export als JSON-Datei mit Datum und Uhrzeit im Namen
+  - Import mit Prüfung (richtiger Reiter, lesbare Datei, keine neuere Dateiversion) und Bereinigung der Inhalte
+  - Gesichert werden Layout, Feldnamen, Format/Position/Breite und Auflösung, nicht Titel, Werte oder „Summe bis Vortag“
+- **Versionierung:** Footer mit Version, Schema `alpha_JJJJMMTT_NN`
+- **Versions-Abgleich** beim Laden eines Backups: Fehlermeldung mit Hinweis auf die passende GitHub-Version, das frühere Format `alpha_TTMMJJJJ` wird weiter erkannt
+- **Info-Tooltips (i)**- Eigener FIT-Parser (Messpunkte sowie Session- und Lap-Daten) und GPX-Parser
 - Externe Bibliotheken, jeweils mit fester Version:
   - [SortableJS](https://sortablejs.github.io/Sortable/) 1.15.2 für Drag & Drop
   - [html2canvas](https://html2canvas.hertzen.com/) 1.4.1 für den PNG-Export
