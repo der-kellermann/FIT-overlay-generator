@@ -133,11 +133,24 @@
   @media (max-width: 600px) {   /* Handy: Karten im Schema immer untereinander */
     .zone .chip, .zone[data-zone="off"] .chip { flex: 1 1 100%; }
   }
+  /* Info-Tooltips (i) */
+  .btnrow { position: relative; z-index: 20; }          /* Tooltips liegen über der Tabelle darunter */
+  .btnwrap { display: inline-flex; align-items: center; gap: 4px; }
+  .tipwrap { display: inline-flex; }
+  .tipwrap > button.info { width: 22px; height: 22px; font-size: .78rem; }
+  .tipbubble { display: none; position: absolute; left: 0; top: calc(100% + 4px); z-index: 30; width: min(340px, 100%);
+    box-sizing: border-box; padding: 10px 12px; font-size: .84rem; font-weight: 400; line-height: 1.45; text-align: left;
+    background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+  .tipwrap.open .tipbubble { display: block; }
+  @media (hover: hover) { .tipwrap:hover .tipbubble { display: block; } }
+  .foot { max-width: 1500px; margin: 0 auto; padding: 8px 16px 28px; color: var(--muted); font-size: .8rem; text-align: center; }
+  .bkmsg { font-size: .88rem; margin: 4px 0; }
+  .bkmsg.err { color: #d11a2a; }
   .pauseopt { display: flex; gap: 6px; align-items: center; font-size: .9rem; margin: 10px 0 4px; }
 
   /* Overlay-Generator */
   .ovtable { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  .ovtable th { text-align: left; font-weight: 600; font-size: .78rem; color: var(--muted); padding: 4px 6px; }
+  .ovtable th { position: static; text-align: left; font-weight: 600; font-size: .78rem; color: var(--muted); padding: 4px 6px; }
   .ovtable td { padding: 3px 6px; border: 0; white-space: nowrap; text-align: left; }
   .ovtable input[type=text] { font: inherit; width: 100%; min-width: 5.5em; box-sizing: border-box; padding: 6px 8px;
     border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); }
@@ -326,6 +339,21 @@
           <div class="ovlayout" id="ovLayout"></div>
           <label class="pauseopt"><input type="checkbox" id="ovOn_pause" checked> Pause als Zusatzzeile unter der Bewegungszeit anzeigen</label>
           <div id="ovDndNote" class="rangeMsg"></div>
+          <details class="coll" id="ovBkBackup">
+            <summary><span class="coll-title">Layout sichern (Backup)</span><span class="coll-line" id="ovBkLine"></span></summary>
+            <div class="coll-body">
+              <p class="muted">Sichert Layout, Feldnamen, Format, Auflösung und Hintergrund dieses Reiters (nicht Titel, Werte oder „Summe bis Vortag“). Die Exportdatei enthält Datum und Uhrzeit im Namen, so behältst du mehrere Stände.</p>
+              <div class="btnrow">
+                <span class="btnwrap"><button id="ovBkSave" type="button">Im Browser speichern</button><span class="tipwrap"><button type="button" class="info" aria-label="Info zu „Im Browser speichern“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Speichert dein aktuelles Layout im Speicher dieses Browsers. Beim nächsten Öffnen wird es automatisch geladen. Es gilt nur für dieses Gerät und diesen Browser und geht verloren, wenn du die Browserdaten löschst. Es wird nichts hochgeladen.</span></span></span>
+                <span class="btnwrap"><button id="ovBkLoad" type="button" class="secondary">Gespeichertes laden</button><span class="tipwrap"><button type="button" class="info" aria-label="Info zu „Gespeichertes laden“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Holt das zuletzt im Browser gespeicherte Layout zurück und ersetzt dein aktuelles Layout. Titel, Werte und „Summe bis Vortag“ bleiben unverändert.</span></span></span>
+                <span class="btnwrap"><button id="ovBkExport" type="button" class="secondary">Als Datei exportieren</button><span class="tipwrap"><button type="button" class="info" aria-label="Info zu „Als Datei exportieren“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Lädt dein Layout als Datei (JSON) herunter. Der Dateiname enthält Datum und Uhrzeit, so kannst du mehrere Stände aufheben und das Layout auf ein anderes Gerät mitnehmen.</span></span></span>
+                <span class="btnwrap"><button id="ovBkImport" type="button" class="secondary">Datei importieren …</button><span class="tipwrap"><button type="button" class="info" aria-label="Info zu „Datei importieren“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Lädt ein zuvor exportiertes Layout aus einer Datei und ersetzt dein aktuelles Layout. Es werden nur Backups für den Reiter „Fullscreen“ akzeptiert.</span></span></span>
+                <input type="file" id="ovBkFile" accept=".json,application/json" class="hidden">
+              </div>
+              <div id="ovBkInfo" class="muted"></div>
+              <div id="ovBkMsg" class="bkmsg"></div>
+            </div>
+          </details>
           <h3 class="ovh">Werte und Namen</h3>
           <p class="muted">Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, das Overlay addiert den heutigen Wert.</p>
           <div style="overflow-x:auto">
@@ -404,6 +432,21 @@
             <p class="muted">Ziehe Felder am Griff ⠿ auf die gestrichelten Plätze oder nach „Nicht angezeigt“. Pro Zeile sind höchstens 2 Felder erlaubt, bei der Breite „Schmal“ nur 1. Mit ◀ ▶ änderst du die Reihenfolge.</p>
             <div class="ovlayout" id="voLayout"></div>
             <div id="voDndNote" class="rangeMsg"></div>
+            <details class="coll" id="voBkBackup">
+              <summary><span class="coll-title">Layout sichern (Backup)</span><span class="coll-line" id="voBkLine"></span></summary>
+              <div class="coll-body">
+                <p class="muted">Sichert Layout, Feldnamen, Position, Breite und Auflösung dieses Reiters (nicht Titel, Werte oder „Summe bis Vortag“). Die Exportdatei enthält Datum und Uhrzeit im Namen, so behältst du mehrere Stände.</p>
+                <div class="btnrow">
+                  <span class="btnwrap"><button id="voBkSave" type="button">Im Browser speichern</button><span class="tipwrap"><button type="button" class="info" aria-label="Info zu „Im Browser speichern“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Speichert dein aktuelles Layout im Speicher dieses Browsers. Beim nächsten Öffnen wird es automatisch geladen. Es gilt nur für dieses Gerät und diesen Browser und geht verloren, wenn du die Browserdaten löschst. Es wird nichts hochgeladen.</span></span></span>
+                  <span class="btnwrap"><button id="voBkLoad" type="button" class="secondary">Gespeichertes laden</button><span class="tipwrap"><button type="button" class="info" aria-label="Info zu „Gespeichertes laden“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Holt das zuletzt im Browser gespeicherte Layout zurück und ersetzt dein aktuelles Layout. Titel, Werte und „Summe bis Vortag“ bleiben unverändert.</span></span></span>
+                  <span class="btnwrap"><button id="voBkExport" type="button" class="secondary">Als Datei exportieren</button><span class="tipwrap"><button type="button" class="info" aria-label="Info zu „Als Datei exportieren“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Lädt dein Layout als Datei (JSON) herunter. Der Dateiname enthält Datum und Uhrzeit, so kannst du mehrere Stände aufheben und das Layout auf ein anderes Gerät mitnehmen.</span></span></span>
+                  <span class="btnwrap"><button id="voBkImport" type="button" class="secondary">Datei importieren …</button><span class="tipwrap"><button type="button" class="info" aria-label="Info zu „Datei importieren“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Lädt ein zuvor exportiertes Layout aus einer Datei und ersetzt dein aktuelles Layout. Es werden nur Backups für den Reiter „Seitenleiste“ akzeptiert.</span></span></span>
+                  <input type="file" id="voBkFile" accept=".json,application/json" class="hidden">
+                </div>
+                <div id="voBkInfo" class="muted"></div>
+                <div id="voBkMsg" class="bkmsg"></div>
+              </div>
+            </details>
             <h3 class="ovh">Werte und Namen</h3>
             <p class="muted">Bei „Summe bis Vortag“ trägst du die bisherigen Gesamtwerte ein, die Seitenleiste addiert den Wert des Zeitraums.</p>
             <div style="overflow-x:auto">
@@ -438,8 +481,13 @@
     </div>
   </div>
 </main>
+<footer class="foot">Track Viewer · Version <span id="appVersion"></span> · Vibe-Coding-Projekt, ohne Gewähr</footer>
 
 <script>
+// Version = "alpha_" + Datum des letzten GitHub-Uploads (JJJJMMTT, ISO 8601) + "_" + laufende Nummer der Uploads an diesem Tag (01, 02, ...).
+// Bei jedem Upload hier anpassen und bei GitHub einen gleichnamigen Tag/Release anlegen.
+const APP_VERSION = "alpha_20261007_01";
+
 // ---------- 1) FIT-Parser (minimal, nur "record"-Nachrichten) ----------
 // Basistypen: [Größe in Bytes, Lesefunktion, "ungültig"-Wert]
 const TYPES = {
@@ -1747,6 +1795,230 @@ $("voLayoutReset").addEventListener("click", () => voCaptureApply(VO_DEFAULT_LAY
 $("voExport").addEventListener("click", voExportPng);
 window.addEventListener("resize", fitVo);
 voInitLayout();
+
+// ---------- Layout sichern: Browser-Speicher, Export und Import ----------
+document.getElementById("appVersion").textContent = APP_VERSION;
+const BK_VERSION = 1;
+const BK_TYPE_NAMES = { fullscreen: "Fullscreen", seitenleiste: "Seitenleiste" };
+
+function bkStamp(d = new Date()) {
+  return {
+    file: `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(d.getHours())}-${pad2(d.getMinutes())}-${pad2(d.getSeconds())}`,
+    pretty: `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`,
+  };
+}
+const bkPretty = iso => { const d = new Date(iso); return isNaN(d) ? "unbekannt" : bkStamp(d).pretty; };
+
+function bkStorage() {          // Browser-Speicher oder null, wenn gesperrt (z. B. privater Modus, eingebettete Ansicht)
+  try {
+    const st = window.localStorage, k = "trackviewer.test";
+    st.setItem(k, "1"); st.removeItem(k);
+    return st;
+  } catch (e) { return null; }
+}
+
+function bkEnvelope(type, data) { return { app: "track-viewer", type, version: BK_VERSION, appVersion: APP_VERSION, savedAt: new Date().toISOString(), data }; }
+
+function bkParse(text, type) {  // prüft ein Backup; liefert { data, savedAt } oder { error }
+  let obj;
+  try { obj = JSON.parse(text); } catch (e) { return { error: "Die Datei ist kein gültiges Layout-Backup (nicht lesbar)." }; }
+  if (!obj || obj.app !== "track-viewer" || typeof obj.data !== "object" || obj.data === null) return { error: "Die Datei ist kein Layout-Backup dieses Tools." };
+  if (obj.type !== type) {
+    const other = Object.prototype.hasOwnProperty.call(BK_TYPE_NAMES, obj.type) ? BK_TYPE_NAMES[obj.type] : "anderes";
+    return { error: `Das ist ein Backup für „${other}“, hier wird eines für „${BK_TYPE_NAMES[type]}“ erwartet. Importiere es im passenden Reiter.` };
+  }
+  if (!Number.isInteger(obj.version) || obj.version > BK_VERSION) return { error: "Das Backup stammt aus einer neueren Version des Tools und kann hier nicht gelesen werden." };
+  return { data: obj.data, savedAt: obj.savedAt, appVersion: obj.appVersion };
+}
+
+// Bereinigt ein Layout: nur bekannte Zonen und Felder, jedes Feld höchstens einmal
+function bkCleanLayout(layout, zoneKeys, validIds) {
+  const out = {}, seen = new Set();
+  for (const z of zoneKeys) {
+    out[z] = [];
+    const arr = layout && Array.isArray(layout[z]) ? layout[z] : [];
+    for (const id of arr) if (typeof id === "string" && validIds.includes(id) && !seen.has(id)) { seen.add(id); out[z].push(id); }
+  }
+  return out;
+}
+function bkCleanNames(names, validIds) {
+  const out = {};
+  if (names && typeof names === "object") for (const id of validIds) {
+    const v = Object.prototype.hasOwnProperty.call(names, id) ? names[id] : undefined;
+    if (typeof v === "string" && v.trim()) out[id] = v.trim().slice(0, 60);
+  }
+  return out;
+}
+// Abgleich der App-Version: liefert eine Warnung, wenn das Backup nicht zur geladenen Seite passt
+function bkParseVersion(v) {   // "alpha_JJJJMMTT_NN"; ohne Nummer gilt 01; das frühere Format "alpha_TTMMJJJJ" wird weiterhin erkannt
+  const m = typeof v === "string" ? v.match(/^alpha_(\d{8})(?:_(\d{1,3}))?$/) : null;
+  if (!m) return null;
+  const digits = m[1], valid = (y, mo, d) => y >= 2000 && y <= 2999 && mo >= 1 && mo <= 12 && d >= 1 && d <= 31;
+  let y = +digits.slice(0, 4), mo = +digits.slice(4, 6), d = +digits.slice(6, 8);
+  if (!valid(y, mo, d)) { d = +digits.slice(0, 2); mo = +digits.slice(2, 4); y = +digits.slice(4, 8); if (!valid(y, mo, d)) return null; }
+  const n = m[2] === undefined ? 1 : +m[2];
+  return { text: v, num: (y * 10000 + mo * 100 + d) * 1000 + n, pretty: `${pad2(d)}.${pad2(mo)}.${y}` + (n > 1 ? `, Upload Nr. ${n}` : "") };
+}
+function bkVersionWarning(appVersion, savedAt) {
+  if (appVersion === APP_VERSION) return "";
+  const head = "Achtung: ", tail = " Es kann sein, dass nicht alles wiederhergestellt werden kann.";
+  if (appVersion === undefined || appVersion === null) {
+    const d = isNaN(new Date(savedAt)) ? null : bkStamp(new Date(savedAt)).pretty.slice(0, 10);
+    return head + `Dieses Backup enthält keine Versionsangabe und stammt aus einer älteren Version als ${APP_VERSION}.` + tail +
+      " Nutze dafür die Version von GitHub, die zum Zeitpunkt der Sicherung aktuell war" + (d ? ` (also den Stand vom oder vor dem ${d}).` : ".");
+  }
+  const bv = bkParseVersion(appVersion), cv = bkParseVersion(APP_VERSION);
+  if (bv && bv.num === cv.num) return "";          // gleicher Stand, nur anders geschrieben (z. B. ohne Nummer oder im früheren Format)
+  if (!bv) return head + `Dieses Backup hat eine unbekannte Versionsangabe („${String(appVersion).slice(0, 40)}“, die Seite hat ${APP_VERSION}).` + tail + " Nutze ggf. eine ältere Version von GitHub.";
+  if (bv.num > cv.num) {
+    return head + `Dieses Backup stammt aus der neueren Version ${bv.text}, die Seite hat die Version ${APP_VERSION}.` + tail +
+      ` Nutze dafür die Version „${bv.text}“ (oder neuer) von GitHub.`;
+  }
+  return head + `Dieses Backup stammt aus der Version ${bv.text}, die Seite hat die Version ${APP_VERSION}.` + tail +
+    ` Nutze dafür besser die ältere Version „${bv.text}“ von GitHub (Stand vom ${bv.pretty}).`;
+}
+const bkLevel = v => Number.isInteger(v) && v >= 0 && v <= 3 ? v : 1;
+
+// ----- Fullscreen -----
+const BK_OV_IDS = () => OV_FIELDS.filter(f => !f.sub).map(f => f.id);
+const BK_OV_ZONES = ["hero", "1", "2", "3", "4", "off"];
+
+function ovCollectBackup() {
+  ovLayouts[ovFormat] = captureLayout();                       // aktuellen Stand einrechnen
+  const names = {};
+  for (const f of OV_FIELDS) { const v = $("ovName_" + f.id).value.trim(); if (v) names[f.id] = v; }
+  const layouts = {};
+  for (const fmt of Object.keys(OV_FORMATS)) layouts[fmt] = bkCleanLayout(ovLayouts[fmt] || OV_LAYOUT_DEFAULTS[fmt], BK_OV_ZONES, BK_OV_IDS());
+  return { format: ovFormat, level: $("ovRes").selectedIndex, transparent: $("ovTransparent").checked, pause: $("ovOn_pause").checked, names, layouts };
+}
+
+function ovApplyBackup(data) {
+  const formats = Object.keys(OV_FORMATS);
+  for (const fmt of formats) {
+    if (data.layouts && typeof data.layouts === "object" && Object.prototype.hasOwnProperty.call(data.layouts, fmt))
+      ovLayouts[fmt] = bkCleanLayout(data.layouts[fmt], BK_OV_ZONES, BK_OV_IDS());
+  }
+  const fmt = formats.includes(data.format) ? data.format : "16x9";
+  ovFormat = fmt; $("ovFormat").value = fmt;
+  rebuildResOptions(bkLevel(data.level));
+  $("ovTransparent").checked = !!data.transparent;
+  $("ovOn_pause").checked = data.pause !== false;
+  const names = bkCleanNames(data.names, OV_FIELDS.map(f => f.id));
+  for (const f of OV_FIELDS) $("ovName_" + f.id).value = names[f.id] || "";
+  updateOvInfo();
+  applyLayout(ovLayouts[fmt] || OV_LAYOUT_DEFAULTS[fmt]);
+}
+
+// ----- Seitenleiste -----
+const BK_VO_IDS = () => VO_FIELDS.map(f => f.id);
+const BK_VO_ZONES = () => VO_ZONES.map(z => z[0]);
+
+function voCollectBackup() {
+  const names = {};
+  for (const f of VO_FIELDS) { const v = $("voName_" + f.id).value.trim(); if (v) names[f.id] = v; }
+  const layout = {};
+  for (const z of BK_VO_ZONES()) layout[z] = voZoneIds(z);
+  return { side: $("voSide").value, width: $("voWidth").value, level: $("voRes").selectedIndex, names, layout };
+}
+
+function voApplyBackup(data) {
+  $("voSide").value = data.side === "right" ? "right" : "left";
+  $("voWidth").value = ["narrow", "normal", "wide"].includes(data.width) ? data.width : "normal";
+  $("voRes").selectedIndex = bkLevel(data.level);
+  const names = bkCleanNames(data.names, BK_VO_IDS());
+  for (const f of VO_FIELDS) $("voName_" + f.id).value = names[f.id] || "";
+  voCaptureApply(bkCleanLayout(data.layout, BK_VO_ZONES(), BK_VO_IDS()));
+}
+
+// ----- gemeinsame Bedienung (Speichern, Laden, Export, Import) -----
+function setupBackup(cfg) {
+  const key = "trackviewer.layout." + cfg.type;
+  const storage = bkStorage();
+  const E = suffix => $(cfg.prefix + suffix);
+  const say = (text, isErr) => { E("Msg").textContent = text; E("Msg").classList.toggle("err", !!isErr); };
+
+  const readSaved = () => {
+    if (!storage) return null;
+    try { const raw = storage.getItem(key); if (!raw) return null; const r = bkParse(raw, cfg.type); return r.error ? null : r; }
+    catch (e) { return null; }
+  };
+  const refreshInfo = () => {
+    let t;
+    if (!storage) t = "Der Browser-Speicher ist in dieser Ansicht nicht verfügbar. Nutze Export und Import.";
+    else { const r = readSaved(); t = r ? `Im Browser gespeichert: ${bkPretty(r.savedAt)}` : "Noch nichts im Browser gespeichert."; }
+    E("Info").textContent = t; E("Line").textContent = t;
+  };
+  const report = (text, r) => {            // Erfolgsmeldung, bei abweichender Version zusätzlich als Fehler markiert
+    const warn = bkVersionWarning(r.appVersion, r.savedAt);
+    say(warn ? `${text} ${warn}` : text, !!warn);
+  };
+  const applySafely = data => {
+    try { cfg.apply(data); return true; }
+    catch (e) { say("Das Backup konnte nicht angewendet werden: " + e.message, true); return false; }
+  };
+
+  if (!storage) { E("Save").disabled = true; E("Load").disabled = true; E("Save").title = E("Load").title = "Browser-Speicher nicht verfügbar"; }
+
+  E("Save").addEventListener("click", () => {
+    if (!storage) return;
+    try {
+      storage.setItem(key, JSON.stringify(bkEnvelope(cfg.type, cfg.collect())));
+      say("Layout im Browser gespeichert.");
+    } catch (e) { say("Speichern nicht möglich (Speicher voll oder gesperrt). Nutze den Export als Datei.", true); }
+    refreshInfo();
+  });
+
+  E("Load").addEventListener("click", () => {
+    const r = readSaved();
+    if (!r) return say("Es ist noch nichts im Browser gespeichert.", true);
+    if (applySafely(r.data)) report(`Gespeichertes Layout vom ${bkPretty(r.savedAt)} geladen.`, r);
+  });
+
+  E("Export").addEventListener("click", async () => {
+    const name = `trackviewer-layout-${cfg.type}_${bkStamp().file}.json`;
+    const err = await saveFile(name, JSON.stringify(bkEnvelope(cfg.type, cfg.collect()), null, 2), "application/json");
+    say(err || `Exportiert als ${name}`, !!err);
+  });
+
+  E("Import").addEventListener("click", () => E("File").click());
+  E("File").addEventListener("change", async () => {
+    const file = E("File").files && E("File").files[0];
+    if (!file) return;
+    try {
+      const r = bkParse(await file.text(), cfg.type);
+      if (r.error) say(r.error, true);
+      else if (applySafely(r.data)) report(`Layout aus „${file.name}“ geladen (gesichert am ${bkPretty(r.savedAt)}).`, r);
+    } catch (e) { say("Die Datei konnte nicht gelesen werden.", true); }
+    E("File").value = "";          // dieselbe Datei kann erneut gewählt werden
+  });
+
+  // Beim Öffnen: ausdrücklich gespeichertes Layout wieder anwenden
+  const saved = readSaved();
+  if (saved && applySafely(saved.data)) report(`Beim Öffnen geladen: gespeichertes Layout vom ${bkPretty(saved.savedAt)}.`, saved);
+  refreshInfo();
+}
+
+setupBackup({ prefix: "ovBk", type: "fullscreen",   collect: ovCollectBackup, apply: ovApplyBackup });
+setupBackup({ prefix: "voBk", type: "seitenleiste", collect: voCollectBackup, apply: voApplyBackup });
+
+// ---------- Info-Tooltips (i) ----------
+function closeTips(except) {
+  document.querySelectorAll(".tipwrap.open").forEach(w => {
+    if (w === except) return;
+    w.classList.remove("open");
+    w.querySelector("button.info").setAttribute("aria-expanded", "false");
+  });
+}
+document.addEventListener("click", e => {
+  const btn = e.target.closest(".tipwrap > button.info");
+  const wrap = btn ? btn.parentElement : null;
+  closeTips(wrap);                                   // andere Tooltips und Klicks daneben schließen
+  if (wrap) {
+    const open = wrap.classList.toggle("open");
+    btn.setAttribute("aria-expanded", open);
+  }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeTips(null); });
 
 // ---------- Reiter (Rohdaten / Overlay / Video-Overlay) ----------
 const TABS = [["tabOv", "panelOv"], ["tabVo", "panelVo"], ["tabRaw", "panelRaw"]];
