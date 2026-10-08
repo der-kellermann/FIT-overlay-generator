@@ -1,8 +1,10 @@
-# Track Viewer – Video Overlay Website
+# OverlayUnplugged – Video Overlay Website
+
+> Früher „Track Viewer“. Die Datei heißt vorerst weiter `fit-viewer.html`.
 
 Ein kleines Browser-Tool, das **FIT- und GPX-Dateien** (Radfahren, Garmin, Wahoo & Co.) einliest, auswertet und daraus **Overlays als PNG, PNG-Sequenz oder MOV-Video** erzeugt, etwa für Endcards, Instagram-Beiträge oder als Seitenleiste in einem Video.
 
-Das Tool besteht aus **einer einzigen HTML-Datei** (`fit-viewer.html`). Es gibt keinen Server und kein Konto. Deine Dateien werden **nur lokal im Browser** verarbeitet und nirgendwohin hochgeladen.
+Das Tool besteht aus **einer einzigen HTML-Datei** (`fit-viewer.html`) mit Startseite und App. Es gibt keinen Server und kein Konto. Deine Dateien werden **nur lokal im Browser** verarbeitet und nirgendwohin hochgeladen.
 
 > ## ⚠️ Hinweis: Vibe-Coding-Projekt
 > Dieses Projekt ist **„vibe-coded“**: Es wurde von einem Programmier-Anfänger gemeinsam mit einer KI (Claude von Anthropic) in einem Dialog entwickelt.
@@ -16,7 +18,7 @@ Das Tool besteht aus **einer einzigen HTML-Datei** (`fit-viewer.html`). Es gibt 
 
 ## Was kann das Tool?
 
-Das Tool hat links eine Seitenleiste (Upload und Quicklook) und rechts vier Reiter: Fullscreen, Seitenleiste, Data-Viewer und Rohdaten.
+Beim Öffnen erscheint eine **Startseite** mit Kurzinfos, „Zur App“ führt in die App. Die App hat links eine **Seitenleiste** (Upload und Quicklook, ein- und ausklappbar, dazu der Knopf „Rohdaten ansehen“) und rechts drei Reiter: Fullscreen, Seitenleiste und Data-Viewer. Oben rechts wechselt ein Schalter zwischen **automatisch, hell und dunkel**.
 
 ### Fullscreen
 Ein Overlay in voller Bildgröße, gedacht für Endcards und Instagram-Beiträge.
@@ -47,20 +49,22 @@ Diagramm der geladenen Aktivität mit Zeitregler und Abspielen.
 - Wählbare Verläufe (u. a. Kalorien), X-Achse wahlweise Zeit nach Start, Uhrzeit oder Strecke, Glättung 5 s bis 60 s
 - Einen Zeitbereich markieren und ihn mit **einem Klick in die Seitenleiste übernehmen**
 
-### Rohdaten
+### Rohdaten (Fenster)
+Öffnet über den Knopf „Rohdaten ansehen“ links, schließt per ✕, Klick daneben oder Esc.
 - Alle Messpunkte als Tabelle, mit frei wählbarem Zeilenbereich (maximal 1000 Zeilen gleichzeitig)
 - **CSV-Download** aller Zeilen
 
 ## So benutzt du es
 
 1. Datei `fit-viewer.html` im Browser öffnen (oder die gehostete Seite aufrufen).
-2. Links eine **FIT- oder GPX-Datei** auswählen oder hineinziehen.
+2. Auf der Startseite **Zur App** wählen, dann links eine **FIT- oder GPX-Datei** auswählen oder hineinziehen.
 3. Im Reiter **Fullscreen** oder **Seitenleiste** Zeitraum bzw. Zeitpunkt wählen und das Layout anpassen.
 4. **PNG** (Fullscreen oder Seitenleiste) bzw. **PNG-Sequenz oder MOV** (Seitenleiste) herunterladen und im Schnittprogramm über das Video legen.
 
 ## Technik und Datenschutz
 
 - Eine einzige HTML-Datei mit reinem JavaScript, ohne Build-Schritt
+- **Schriften** sind eingebettet (auf die nötigen Zeichen gekürzt, Lizenz SIL OFL): [Sora](https://github.com/sora-xor/sora-font) für Überschriften, [Cormorant Garamond](https://github.com/CatharsisFonts/Cormorant) für den Namen
 - Eigener FIT-Parser (Messpunkte sowie Session- und Lap-Daten) und GPX-Parser
 - Externe Bibliotheken, jeweils mit fester Version:
   - [SortableJS](https://sortablejs.github.io/Sortable/) 1.15.2 für Drag & Drop
@@ -75,23 +79,37 @@ Diagramm der geladenen Aktivität mit Zeitregler und Abspielen.
 - **Kalorien** speichert das Gerät nur pro Runde und gesamt. Für Teilzeiträume werden sie anteilig **geschätzt**.
 - **Bewegungszeit** zählt Zeit mit mindestens 1 km/h. Andere Plattformen rechnen anders.
 - Unterstützt werden nur **FIT und GPX** (kein TCX oder KML).
-- Das Layout wird nicht automatisch gespeichert. Es lässt sich als **Backup-Datei** sichern und wieder importieren.
+- Das Layout wird nicht automatisch gespeichert. Es lässt sich als **Backup-Datei** sichern und wieder importieren. Die Backup-Dateien tragen vorerst noch den alten Namen „track-viewer“, damit ältere Backups weiter laden. Ab der Beta wird das umbenannt, dann sind ältere Backups nicht mehr kompatibel.
+- Das **Aussehen der erzeugten Overlays** (orange Beschriftung) ist noch unverändert. Neue Designs und Presets folgen.
+- Die Auswahl hell/dunkel wird im Browser gemerkt, sonst wird nichts gespeichert.
 - **WebM** wird nicht angeboten: WebM aus dem Browser zeigte in DaVinci Resolve Artefakte und nicht transparente Karten. Browser können kein ProRes erzeugen; der ffmpeg-Befehl dafür steht in der `LIESMICH.txt` der ZIP-Datei.
 - Der Video-Export läuft im Browser. Der Tab sollte dabei **im Vordergrund** bleiben, MOV-Dateien sind auf **4 GB** begrenzt, bei großen Exporten warnt das Tool vor dem Speicherbedarf.
 - Zeitbereiche in Kilometern werden beim Umrechnen gerundet („Von“ ab-, „Bis“ aufgerundet); hin und her schalten kann den Bereich um ein bis zwei Messpunkte erweitern.
 
 ## Geplant
 
-- Komplett überarbeitetes Design
-- Landing-Page mit kurzen Infos und Einstieg in die App
-- Mehrere Dateien auf einmal, automatische „Summe bis Vortag“
-- Design-Presets
-- Rohdaten-Tab kompakter oder als Button in der Seitenleiste
-- Seitenleiste ausblendbar
+- **Design-Presets** (Farben, Schriften, Hintergründe der Boxen): speichern, laden, eigene Farben; Standard „Warm“, zweites Design „Kalt“
+- **Mehrere Dateien** (Mehrtagestouren, unterbrochene Aufzeichnung), automatische „Summe bis Vortag“
+- Behandlung zeitlich **überlappender** Dateien
+- **Feedback-Link** und GitHub-Link auf der Startseite
+- **Tausenderpunkt** ein/aus und Wahl des **Dezimaltrennzeichens**
+- **GitHub-Hosting-Seite** einrichten
+- Ab der Beta: Backup-Dateien umbenennen, **keine Kompatibilität** mit älteren Backups
+- Presets im Detail gestalten (in der Beta)
 
 ## Change Index
 
 > Die Datumsangaben vor dem 7. Oktober 2026 wurden nachträglich zugeordnet und können um einen Tag abweichen.
+
+### alpha_20261008_01 (2026-10-08)
+**Neues Aussehen: Das Tool heißt jetzt OverlayUnplugged (früher Track Viewer).**
+- **Neues Design-System:** helle Verläufe in Weiß mit hellblauem Akzent, Dunkelmodus in Schwarz bis Dunkelgrau, runde Pillen-Elemente
+- **Hell/Dunkel-Schalter** (automatisch, hell, dunkel), merkt sich die Wahl im Browser
+- **Neue Startseite** mit Kurzinfos, Beispiel-Animationen und „Zur App“
+- **Seitenleiste links ein- und ausklappbar**, Reiter mit gleitendem Marker
+- **Rohdaten** öffnen jetzt als Fenster über einen Knopf in der Seitenleiste (der Reiter entfällt)
+- **Schriften** Sora und Cormorant Garamond eingebettet (SIL OFL)
+- Funktionen, Zahlen und Layout-Backups unverändert
 
 ### alpha_20261007_03 (2026-10-08)
 **Hauptfeature: Export der Seitenleiste als PNG-Sequenz oder MOV-Video mit Transparenz.**
@@ -146,3 +164,5 @@ Diagramm der geladenen Aktivität mit Zeitregler und Abspielen.
 ## Lizenz
 
 [GNU Affero General Public License, Version 3 oder später (AGPL-3.0-or-later)](https://www.gnu.org/licenses/agpl-3.0.html). Copyright (C) 2026 der-kellermann.
+
+Die eingebetteten Schriften stehen unter der [SIL Open Font License 1.1](https://openfontlicense.org).
