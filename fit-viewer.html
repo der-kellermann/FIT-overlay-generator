@@ -17,6 +17,14 @@
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 
   SPDX-License-Identifier: AGPL-3.0-or-later
+
+  Version alpha_20261007_03 (2026-10-08)
+  Hauptfeature: Export der Seitenleiste als PNG-Sequenz (ZIP) oder MOV-Video mit Transparenz, offline und ohne Bibliothek.
+  - Export: PNG-Sequenz (1 fps), MOV "Animation" (QuickTime RLE), MOV aus PNG-Bildern; getestet mit DaVinci Resolve
+  - Neuer Reiter Data-Viewer (Diagramm mit Zeitregler, u. a. Kalorienverlauf) mit Uebernahme des markierten Zeitbereichs in die Seitenleiste
+  - Zeitvorschau mit Regler in der Seitenleiste
+  - Zeitbereich wird beim Wechsel Uhrzeit / Zeit nach Start / Kilometermarke umgerechnet
+  - Korrektur: Anzeige "-0,00" im Kilometer-Modus
   Externe Bibliotheken (werden von einem CDN geladen, nicht mitgeliefert): SortableJS (MIT), html2canvas (MIT).
 -->
 <html lang="de">
@@ -32,17 +40,17 @@
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     --bg: #f6f6f4; --card: #ffffff; --text: #1d1d1b; --muted: #6b6b66;
-    --accent: #d9480f; --border: #dcdcd6; --head: #ececE6;
+    --accent: #d9480f; --border: #dcdcd6; --head: #ececE6; --pro: #2f7d4b; --con: #b4493f;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #161614; --card: #212120; --text: #ecece8; --muted: #9a9a93;
-      --accent: #ff8a4c; --border: #3a3a37; --head: #2b2b29;
+      --accent: #ff8a4c; --border: #3a3a37; --head: #2b2b29; --pro: #6fc78f; --con: #e8938a;
     }
   }
   :root[data-theme="dark"] {
     --bg: #161614; --card: #212120; --text: #ecece8; --muted: #9a9a93;
-    --accent: #ff8a4c; --border: #3a3a37; --head: #2b2b29;
+    --accent: #ff8a4c; --border: #3a3a37; --head: #2b2b29; --pro: #6fc78f; --con: #e8938a;
   }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
   body { margin: 0; background: var(--bg); color: var(--text);
@@ -130,6 +138,20 @@
     min-height: 40px; padding: 6px 8px; border: 1.5px dashed var(--border); border-radius: 8px;
     color: var(--muted); font-size: .8rem; user-select: none; }
   @media (max-width: 600px) { .zone .slot { flex: 1 1 100%; } }
+  /* Data-Viewer */
+  .dvchips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dvchip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--border);
+    border-radius: 999px; font-size: .88rem; cursor: pointer; user-select: none; }
+  .dvchip .dvdot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dvchip input { margin: 0; }
+  #dvWrap { width: 100%; margin-top: 12px; }
+  #dvChart { display: block; width: 100%; touch-action: pan-y; cursor: crosshair; border-radius: 8px; }
+  #dvSlider { width: 100%; margin: 8px 0 4px; accent-color: var(--accent); }
+  #dvReadout, #dvRangeStats { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 8px; margin: 10px 0 0; }
+  #panelDv .stat { padding: 5px 9px; border-radius: 8px; }
+  #panelDv .stat span { font-size: .7rem; }
+  #panelDv .stat b { font-size: .98rem; font-variant-numeric: tabular-nums; }
+  #panelDv #dvCard { margin-top: 0; }
   /* Layout-Schema (Drag & Drop) */
   .ovh { font-size: .95rem; margin: 16px 0 4px; }
   .ovlayout { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
@@ -153,6 +175,25 @@
   @media (max-width: 600px) {   /* Handy: Karten im Schema immer untereinander */
     .zone .chip, .zone[data-zone="off"] .chip { flex: 1 1 100%; }
   }
+  /* Zeitvorschau */
+  .pvstage { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 8px 0; }
+  .pvstage canvas { display: block; width: 100%; height: auto; }
+  .pvstage.checker { background-color: #1b1e27; background-image: linear-gradient(45deg,#262a35 25%,transparent 25%),linear-gradient(-45deg,#262a35 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#262a35 75%),linear-gradient(-45deg,transparent 75%,#262a35 75%); background-size: 24px 24px; background-position: 0 0, 0 12px, 12px -12px, -12px 0; }
+  .pvstage.light { background: #bccbe0; }
+  .pvstage.dark { background: #0f1218; }
+  .pvstage.mid { background: linear-gradient(135deg, #8fa6c4, #2b3340 60%, #11151c); }
+  /* Export-Optionen */
+  .btnrow.exopts { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); grid-auto-rows: 1fr; gap: 10px; align-items: stretch; margin: 6px 0 4px; }
+  .exopt { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--card); display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; box-sizing: border-box; height: 100%; }
+  .exopt.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .exlabel { display: flex; gap: 8px; cursor: pointer; flex: 1; }
+  .exlabel input { margin-top: 5px; width: auto; }
+  .extitle { display: block; font-weight: 600; }
+  .exdesc { display: block; font-size: .82rem; color: var(--muted); line-height: 1.4; margin-top: 4px; }
+  .exline { display: block; margin-top: 3px; }
+  .exline.pro { color: var(--pro); }
+  .exline.con { color: var(--con); }
   /* Info-Tooltips (i) */
   .btnrow { position: relative; z-index: 20; }          /* Tooltips liegen über der Tabelle darunter */
   .btnwrap { display: inline-flex; align-items: center; gap: 4px; }
@@ -294,9 +335,10 @@
     <div class="tabs" role="tablist" aria-label="Bereiche">
       <button type="button" class="tab" role="tab" id="tabOv" aria-controls="panelOv" aria-selected="true">Fullscreen</button>
       <button type="button" class="tab" role="tab" id="tabVo" aria-controls="panelVo" aria-selected="false" tabindex="-1">Seitenleiste</button>
+      <button type="button" class="tab" role="tab" id="tabDv" aria-controls="panelDv" aria-selected="false" tabindex="-1">Data-Viewer</button>
       <button type="button" class="tab" role="tab" id="tabRaw" aria-controls="panelRaw" aria-selected="false" tabindex="-1">Rohdaten</button>
     </div>
-    <p id="emptyState" class="muted">Lade links eine FIT- oder GPX-Datei, um das Fullscreen-Overlay, die Seitenleiste und die Rohdaten zu nutzen.</p>
+    <p id="emptyState" class="muted">Lade links eine FIT- oder GPX-Datei, um das Fullscreen-Overlay, die Seitenleiste, den Data-Viewer und die Rohdaten zu nutzen.</p>
     <div id="panelOv" role="tabpanel" aria-labelledby="tabOv">
         <section id="summary" class="hidden">
           <details class="coll" id="sColl" open>
@@ -419,6 +461,29 @@
                 </div>
               </div></div></div>
             </div>
+            <details class="coll" id="pvCard" open>
+              <summary><span class="coll-title">Zeitvorschau (so sieht der Export aus)</span><span class="coll-line" id="pvLine"></span></summary>
+              <div class="coll-body">
+                <p class="muted">Zeigt die Seitenleiste zu jedem Zeitpunkt des gewählten Zeitraums, mit demselben Zeichner wie der Export. Sie folgt den Einstellungen im Export-Bereich („weich hochzählen“). Änderungen an Layout, Namen, Titel und Summen erscheinen sofort.</p>
+                <div class="range">
+                  <label>Hintergrund
+                    <select id="pvBg"><option value="checker">Schachbrett</option><option value="light">hell (Himmel)</option><option value="dark">dunkel</option><option value="mid">Verlauf</option></select>
+                  </label>
+                  <label>Tempo
+                    <select id="pvSpeed"><option value="1">1× (Echtzeit)</option><option value="10">10×</option><option value="60" selected>60×</option><option value="300">300×</option></select>
+                  </label>
+                </div>
+                <div class="pvstage checker" id="pvStage"><canvas id="pvCanvas" aria-label="Zeitvorschau der Seitenleiste"></canvas></div>
+                <input id="pvSlider" type="range" min="0" max="1" step="1" value="0" aria-label="Zeitregler der Vorschau" style="width:100%;margin:6px 0 4px;accent-color:var(--accent)">
+                <div class="range">
+                  <button id="pvPlay" type="button">▶ Abspielen</button>
+                  <button id="pvStart" type="button" class="secondary">Zum Start</button>
+                  <button id="pvEnd" type="button" class="secondary">Zum Ende</button>
+                  <span id="pvTime" class="muted" style="padding-bottom:9px"></span>
+                </div>
+                <div id="pvMsg" class="muted"></div>
+              </div>
+            </details>
             <div class="btnrow">
               <button id="voExport" type="button">Als PNG herunterladen</button>
               <button id="voReset" type="button" class="secondary">Auf Dateiwerte zurücksetzen</button>
@@ -426,6 +491,45 @@
             </div>
             <div id="voLayoutMsg" class="rangeMsg"></div>
             <div id="voMsg" class="rangeMsg"></div>
+            <details class="coll" id="exCard" open>
+              <summary><span class="coll-title">Video oder Bildfolge exportieren</span><span class="coll-line" id="exLine"></span></summary>
+              <div class="coll-body">
+                <p class="muted">Erzeugt die Seitenleiste als laufendes Overlay für den oben gewählten Zeitraum, mit Transparenz. Die Werte werden für jedes Bild neu berechnet und zählen mit (auch „Summe bis Vortag“). Von Hand geänderte Werte in der Tabelle werden dabei nicht übernommen. Lass den Tab beim Erzeugen im Vordergrund, sonst bremst der Browser.</p>
+                <div class="btnrow exopts">
+                <div class="exopt">
+                  <label class="exlabel"><input type="radio" name="exFormat" value="png" checked>
+                    <span><span class="extitle">PNG-Sequenz (ZIP)</span><span class="exdesc"><span class="exline pro"><b>+</b> sehr schnell erzeugt, kleinste Datei, in jedem Schnittprogramm nutzbar</span><span class="exline con"><b>−</b> nur 1 Bild pro Sekunde, vor dem Import entpacken, Bildrate des Clips auf 1 fps stellen</span></span></span></label>
+                  <span class="tipwrap"><button type="button" class="info" aria-label="Info zu „PNG-Sequenz“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Erzeugt eine ZIP-Datei mit einem PNG-Bild pro Sekunde (seitenleiste_0001.png, 0002 …) und einer kurzen Anleitung. So benutzt du sie: ZIP entpacken und den Ordner im Schnittprogramm als Bildsequenz importieren. In DaVinci Resolve: Clip-Attribute → Video-Bildrate auf 1 fps stellen, dann über das Video legen. Die Transparenz wird verlustfrei übernommen.</span></span>
+                </div>
+                <div class="exopt">
+                  <label class="exlabel"><input type="radio" name="exFormat" value="rle">
+                    <span><span class="extitle">MOV „Animation“</span><span class="exdesc"><span class="exline pro"><b>+</b> eine einzelne Videodatei, verlustfrei, bei wechselnden Werten sehr klein, leicht für DaVinci</span><span class="exline con"><b>−</b> älterer Codec, Erzeugung etwas langsamer, wird größer, wenn sich viel ändert</span></span></span></label>
+                  <span class="tipwrap"><button type="button" class="info" aria-label="Info zu „MOV Animation“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Erzeugt eine MOV-Videodatei mit dem QuickTime-Codec „Animation“ (verlustfrei, mit Transparenz) in der gewählten Bildrate. So benutzt du sie: die .mov-Datei in den Medienpool ziehen und auf eine Spur über dem Video legen, die Transparenz wird erkannt. Bei langsam wechselnden Werten ist die Datei sehr klein, bei vielen Änderungen (weich zählende Zahlen) wird sie größer.</span></span>
+                </div>
+                <div class="exopt">
+                  <label class="exlabel"><input type="radio" name="exFormat" value="movpng">
+                    <span><span class="extitle">MOV aus PNG-Bildern</span><span class="exdesc"><span class="exline pro"><b>+</b> eine einzelne Videodatei, verlustfrei, einfach und schnell erzeugt</span><span class="exline con"><b>−</b> größere Datei, DaVinci muss jedes Bild entpacken (mehr Rechenleistung beim Abspielen)</span></span></span></label>
+                  <span class="tipwrap"><button type="button" class="info" aria-label="Info zu „MOV aus PNG“" aria-expanded="false">i</button><span class="tipbubble" role="tooltip">Erzeugt eine MOV-Videodatei, deren Bilder PNG-Bilder sind (verlustfrei, mit Transparenz). So benutzt du sie: die .mov-Datei in den Medienpool ziehen und über das Video legen. Die Erzeugung ist einfach und schnell. Dein Schnittprogramm muss jedes Bild einzeln entpacken, das kann beim Abspielen mehr Rechenleistung brauchen. Mit „Gleiche Bilder nur einmal speichern“ wird die Datei viel kleiner (experimentell: bitte in deinem Schnittprogramm testen).</span></span>
+                </div>
+                </div>
+                <div class="range" style="margin-top:10px">
+                  <label>Bildrate
+                    <select id="exFps"><option value="1">1 fps</option><option value="25">25 fps</option><option value="30" selected>30 fps</option><option value="60">60 fps</option></select>
+                  </label>
+                  <label class="chk" id="exSmoothWrap"><input type="checkbox" id="exSmooth"> Zahlen zwischen den Sekunden weich hochzählen</label>
+                  <label class="chk" id="exShareWrap" style="display:none"><input type="checkbox" id="exShare"> Gleiche Bilder nur einmal speichern (kleinere Datei, experimentell)</label>
+                </div>
+                <div id="exInfo" class="muted"></div>
+                <div class="range" style="margin-top:6px">
+                  <button id="exGo" type="button">PNG-Sequenz erzeugen</button>
+                  <button id="exEstimate" type="button" class="secondary">Dateigröße schätzen</button>
+                  <button id="exCancel" type="button" class="secondary" style="display:none">Abbrechen</button>
+                </div>
+                <progress id="exProg" value="0" max="1" style="display:none;width:100%;height:10px;margin-top:8px"></progress>
+                <div id="exMsg" class="bkmsg"></div>
+                <div id="exResult"></div>
+              </div>
+            </details>
             <h3 class="ovh">Einstellungen</h3>
             <div class="range">
               <label>Überschrift <input id="voTitle" type="text" placeholder="z. B. Highlands &amp; Steel 2026 – Tag 1" style="width:22em" autocomplete="off"></label>
@@ -478,6 +582,61 @@
           </section>
         </div>
     </div>
+    <div id="panelDv" role="tabpanel" aria-labelledby="tabDv" hidden>
+        <div id="dv" class="hidden">
+          <section id="dvCard" class="summary">
+            <h2>Data-Viewer</h2>
+            <p class="muted">Diagramm der geladenen Aktivität mit Zeitregler. Ziehe im Diagramm oder am Regler, um die Werte an einer Stelle zu sehen, oder lass den Regler abspielen. <span id="dvInfo"></span></p>
+            <div class="dvchips" id="dvChips" aria-label="Anzeige"></div>
+            <div class="range" style="margin-top:10px">
+              <label>X-Achse
+                <select id="dvXmode">
+                  <option value="elapsed">Zeit nach Start</option>
+                  <option value="clock">Uhrzeit</option>
+                  <option value="km">Strecke (km)</option>
+                </select>
+              </label>
+              <label>Glättung
+                <select id="dvSmooth">
+                  <option value="0">aus</option>
+                  <option value="5">5 s</option>
+                  <option value="15">15 s</option>
+                  <option value="60">60 s</option>
+                </select>
+              </label>
+            </div>
+            <div id="dvWrap"><canvas id="dvChart" aria-label="Diagramm der Aktivität"></canvas></div>
+            <input id="dvSlider" type="range" min="0" max="0" value="0" step="1" aria-label="Zeitregler">
+            <div class="range">
+              <button id="dvPlay" type="button">▶ Abspielen</button>
+              <button id="dvBack" type="button" class="secondary" aria-label="Zehn Sekunden zurück">−10 s</button>
+              <button id="dvFwd" type="button" class="secondary" aria-label="Zehn Sekunden vor">+10 s</button>
+              <label>Tempo
+                <select id="dvSpeed">
+                  <option value="1">1× (Echtzeit)</option>
+                  <option value="10">10×</option>
+                  <option value="60" selected>60×</option>
+                  <option value="300">300×</option>
+                  <option value="1000">1000×</option>
+                </select>
+              </label>
+            </div>
+            <div id="dvReadout" class="stats"></div>
+            <div id="dvNote" class="muted" style="margin-top:8px"></div>
+          </section>
+          <section id="dvRangeCard" class="summary">
+            <h2>Zeitraum markieren</h2>
+            <div class="range">
+              <button id="dvSetStart" type="button" class="secondary">Start hier setzen</button>
+              <button id="dvSetEnd" type="button" class="secondary">Ende hier setzen</button>
+              <button id="dvClear" type="button" class="secondary">Bereich löschen</button>
+              <button id="dvToVo" type="button" disabled>In Seitenleiste übernehmen</button>
+            </div>
+            <div id="dvRangeOut" class="muted">Setze Start und Ende, dann siehst du hier den Zeitraum und seine Werte.</div>
+            <div id="dvRangeStats" class="stats"></div>
+          </section>
+        </div>
+    </div>
     <div id="panelRaw" role="tabpanel" aria-labelledby="tabRaw" hidden>
         <div id="actions" class="actions hidden"><button id="csvBtn" type="button">Alle Zeilen als CSV herunterladen</button></div>
         <div id="range" class="range hidden">
@@ -506,7 +665,7 @@
 <script>
 // Version = "alpha_" + Datum des letzten GitHub-Uploads (JJJJMMTT, ISO 8601) + "_" + laufende Nummer der Uploads an diesem Tag (01, 02, ...).
 // Bei jedem Upload hier anpassen und bei GitHub einen gleichnamigen Tag/Release anlegen.
-const APP_VERSION = "alpha_20261007_02";
+const APP_VERSION = "alpha_20261007_03";
 
 // ---------- 1) FIT-Parser (minimal, nur "record"-Nachrichten) ----------
 // Basistypen: [Größe in Bytes, Lesefunktion, "ungültig"-Wert]
@@ -865,7 +1024,7 @@ function haversineKm(a, b) {
 
 function setupSummary() {
   const timed = current.rows.filter(r => r.time);
-  if (timed.length < 2) { $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); $("vo").classList.add("hidden"); return; }
+  if (timed.length < 2) { $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); $("vo").classList.add("hidden"); $("dv").classList.add("hidden"); return; }
   current.timed = timed;
   current.t0 = timed[0].time;
   current.t1 = timed[timed.length - 1].time;
@@ -873,6 +1032,7 @@ function setupSummary() {
   fillSummaryDefaults();
   runSummary();
   voSetup();
+  DV.setData();
 }
 
 // ----- Zeitraum-Auswahl (gemeinsam für Fullscreen und Seitenleiste, aber mit getrenntem Zustand) -----
@@ -898,7 +1058,49 @@ function applyRangeDefaults(mode, fromEl, toEl, hintEl) {
   fromEl.value = d.from; toEl.value = d.to;
   fromEl.placeholder = toEl.placeholder = d.ph;
   fromEl.inputMode = toEl.inputMode = d.im;
+  fromEl.dataset.mode = toEl.dataset.mode = mode;       // in welcher Einheit die Felder gerade gefüllt sind
   hintEl.textContent = rangeHint(mode);
+}
+
+// ----- Zeitraum beim Wechsel der Angabe (Uhrzeit / Zeit nach Start / Kilometer) umrechnen -----
+function rangeToSeconds(mode, fromRaw, toRaw) {            // -> { a, b } in Sekunden seit Aktivitätsstart oder null
+  const { timed, t0, t1 } = current, total = (t1 - t0) / 1000;
+  const sec = r => (r.time - t0) / 1000;
+  let a, b;
+  if (mode === "km") {
+    const ka = parseNum(fromRaw), kb = parseNum(toRaw), cum = voCum();
+    if (!cum || isNaN(ka) || isNaN(kb) || ka < 0 || kb < ka) return null;
+    let i0 = cum.findIndex(v => v >= ka - 1e-9); if (i0 < 0) i0 = cum.length - 1;
+    let i1 = cum.findIndex(v => v >= kb - 1e-9); if (i1 < 0) i1 = cum.length - 1;
+    a = sec(timed[i0]); b = sec(timed[i1]);
+  } else {
+    const x = parseTime(fromRaw), y = parseTime(toRaw);
+    if (x === null || y === null) return null;
+    if (mode === "clock") {
+      if (x >= 86400 || y >= 86400) return null;
+      const sod0 = t0.getHours() * 3600 + t0.getMinutes() * 60 + t0.getSeconds(), off = v => (((v - sod0) % 86400) + 86400) % 86400;
+      a = off(x); b = off(y);
+    } else { a = x; b = y; }
+    if (b < a) return null;
+  }
+  return { a: Math.max(0, Math.min(total, a)), b: Math.max(0, Math.min(total, b)) };
+}
+function secondsToFields(mode, a, b) {                      // -> { from, to } als Text im Zielmodus oder null
+  const { timed, t0 } = current;
+  if (mode === "dur") return { from: fmtHMS(a), to: fmtHMS(b) };
+  if (mode === "clock") return { from: clockStr(new Date(t0.getTime() + a * 1000)), to: clockStr(new Date(t0.getTime() + b * 1000)) };
+  const cum = voCum(); if (!cum) return null;
+  let ia = 0; for (let i = 0; i < timed.length && (timed[i].time - t0) / 1000 <= a + 0.001; i++) ia = i;       // letzter Punkt bis a
+  let ib = timed.length - 1; for (let i = 0; i < timed.length; i++) if ((timed[i].time - t0) / 1000 >= b - 0.001) { ib = i; break; }   // erster Punkt ab b
+  const lo = Math.max(0, Math.floor(cum[ia] * 100 + 1e-6) / 100), hi = Math.max(0, Math.ceil(cum[ib] * 100 - 1e-6) / 100);                 // Von abrunden, Bis aufrunden: Bereich bleibt abgedeckt
+  return { from: lo === 0 ? "0" : nf(lo, 2), to: nf(hi, 2) };
+}
+function convertRangeFields(newMode, fromEl, toEl, hintEl) {   // Von/Bis in die neue Angabe umrechnen; sonst Standard (ganze Aktivität)
+  const oldMode = fromEl.dataset.mode;
+  const secs = oldMode && oldMode !== newMode ? rangeToSeconds(oldMode, fromEl.value, toEl.value) : null;
+  const conv = secs ? secondsToFields(newMode, secs.a, secs.b) : null;
+  applyRangeDefaults(newMode, fromEl, toEl, hintEl);
+  if (conv) { fromEl.value = conv.from; toEl.value = conv.to; }
 }
 
 function formatTimeField(inputEl, mode) {      // Eingaben wie 0830 beim Verlassen des Feldes sauber formatieren
@@ -1117,7 +1319,7 @@ function renderSummary(sel) {
 $("sBtn").addEventListener("click", runSummary);
 ["sFrom", "sTo"].forEach(id => $(id).addEventListener("blur", () => formatTimeField($(id), $("sMode").value)));
 ["sFrom", "sTo"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") runSummary(); }));
-$("sMode").addEventListener("change", () => { if (current && current.timed) { fillSummaryDefaults(); runSummary(); } });
+$("sMode").addEventListener("change", () => { if (current && current.timed) { convertRangeFields($("sMode").value, $("sFrom"), $("sTo"), $("sHint")); runSummary(); } });
 
 // ---------- Overlay-Generator ----------
 const nfp = (v, dec = 1) => v.toLocaleString("de-DE", { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: false });
@@ -1527,6 +1729,7 @@ const VO_DEFAULT_LAYOUT = {
   off: ["gesamt", "avgPower", "maxPower", "avgCad", "altMax"],
 };
 let voError = "";
+let expRefreshHook = null;      // wird vom Export-Modul gesetzt
 
 const voField = id => VO_FIELDS.find(f => f.id === id);
 const voChip = id => document.querySelector(`#voLayout .chip[data-id="${id}"]`);
@@ -1642,6 +1845,7 @@ function voBuild() {
   $("voStage").classList.add("checker");
   fitVo();
   fitOverlayText("#voTarget .ov-value");
+  if (expRefreshHook) expRefreshHook();
 }
 
 function fitVo() {
@@ -1737,10 +1941,11 @@ function voRun() {
   const err = t => { $("voTimeMsg").textContent = t; if (t) { $("voLine").textContent = "Eingabe prüfen"; $("voTimeResult").textContent = ""; $("voOut").innerHTML = ""; $("voNote").textContent = ""; } };
   const { t0, t1 } = current, total = (t1 - t0) / 1000;
   const r = resolveRange($("voTimeMode").value, $("voFrom").value, $("voTo").value, true);
-  if (r.error) return err(r.error);
+  if (r.error) { current.voRange = null; err(r.error); if (expRefreshHook) expRefreshHook(); return; }
   err("");
 
   if (r.zero) {                      // Start der Aktivität: noch nichts gefahren
+    current.voRange = null;
     $("voTimeResult").textContent = `Gewählter Zeitraum: Start der Aktivität (${clockStr(t0)} Uhr, 0:00:00, 0,00 km). Alle Werte stehen auf 0, die Herzfrequenz auf „-“.`;
     $("voLine").textContent = "Start der Aktivität";
     $("voOut").innerHTML = ""; $("voNote").textContent = "";
@@ -1750,6 +1955,7 @@ function voRun() {
 
   const d = computeSummary(r.sel, total);
   current.voData = d;
+  current.voRange = { i0: current.timed.indexOf(r.sel[0]), i1: current.timed.indexOf(r.sel[r.sel.length - 1]) };   // für den Export
   $("voTimeResult").textContent = "";
   $("voOut").innerHTML = summaryCards(d);
   $("voNote").textContent = summaryNote(d);
@@ -1809,7 +2015,7 @@ $("voTimeBtn").addEventListener("click", voRun);
   $(id).addEventListener("keydown", e => { if (e.key === "Enter") voRun(); });
   $(id).addEventListener("blur", () => formatTimeField($(id), $("voTimeMode").value));
 });
-$("voTimeMode").addEventListener("change", () => { if (current && current.timed) { voFillTimeDefault(); voRun(); } });
+$("voTimeMode").addEventListener("change", () => { if (current && current.timed) { convertRangeFields($("voTimeMode").value, $("voFrom"), $("voTo"), $("voTimeHint")); voRun(); } });
 $("voReset").addEventListener("click", () => { if (current && current.voVals) voApplyValues(current.voVals); });
 $("voLayoutReset").addEventListener("click", () => voCaptureApply(VO_DEFAULT_LAYOUT));
 $("voExport").addEventListener("click", voExportPng);
@@ -2040,8 +2246,838 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeTips(null); });
 
+// ---------- Data-Viewer (Diagramme mit Zeitregler) ----------
+const DV = (() => {
+const SERIES = [
+  { key: "speed", label: "Tempo",    unit: "km/h", color: "#f97316", smooth: true,  zero: true,  dec: 1 },
+  { key: "hr",    label: "Puls",     unit: "bpm",  color: "#e5484d", smooth: true,  zero: false, dec: 0 },
+  { key: "alt",   label: "Höhe",     unit: "m",    color: "#3b82f6", smooth: false, zero: false, dec: 0, area: true },
+  { key: "power", label: "Leistung", unit: "W",    color: "#a855f7", smooth: true,  zero: true,  dec: 0 },
+  { key: "cad",   label: "Kadenz",   unit: "rpm",  color: "#14b8a6", smooth: true,  zero: true,  dec: 0 },
+  { key: "kcal",  label: "Kalorien", unit: "kcal", color: "#d4a017", smooth: false, zero: true,  dec: 0, note: "geschätzt, kumuliert", readLabel: "Kalorien (geschätzt)" },
+];
+const D = { n: 0, rows: [], t: [], t0: null, cum: null, dt: 1, raw: {}, avail: [], active: new Set(),
+  xmode: "elapsed", smooth: 0, idx: 0, m1: null, m2: null, playing: false, speed: 60, tcur: 0, last: 0,
+  smoothCache: {}, layout: null, cache: null, ref: null, lastIdx: -1 };
+
+const css = name => (getComputedStyle(document.documentElement).getPropertyValue(name) || "").trim();
+const secOfDay = d => d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds();
+const panelVisible = () => !$("panelDv").hidden;
+
+function clearData() {
+  D.n = 0; D.ref = null; D.cache = null; stopPlay();
+  $("dv").classList.add("hidden");
+}
+
+// Geschätzter Kalorienverlauf (Summe seit Start). Das Gerät speichert Kalorien nur pro Runde und gesamt, deshalb wird jede Runde
+// gleichmäßig über ihre Dauer verteilt. Ohne Rundendaten wird die Gesamtsumme gleichmäßig über die Zeit verteilt.
+function calorieCurve() {
+  const rows = current.rows;
+  const laps = (rows.laps || []).filter(l => l.cal !== undefined && l.start && (l.elapsed || l.end));
+  const sessionCal = (rows.sessions || []).filter(x => x.cal !== undefined && x.cal > 0).reduce((a, x) => a + x.cal, 0);
+  const total = D.t[D.n - 1];
+  if (laps.length) {
+    const L = laps.map(l => { const s0 = (l.start - D.t0) / 1000; return { s: s0, e: s0 + (l.elapsed ? l.elapsed : (l.end - l.start) / 1000), cal: l.cal }; })
+      .filter(l => l.e > l.s).sort((a, b) => a.s - b.s);
+    if (L.length) {
+      const sumLaps = L.reduce((a, l) => a + l.cal, 0), factor = sessionCal > 0 && sumLaps > 0 ? sessionCal / sumLaps : 1;
+      const out = new Float64Array(D.n); let done = 0, k = 0;
+      for (let i = 0; i < D.n; i++) {
+        const t = D.t[i];
+        while (k < L.length && L[k].e <= t) { done += L[k].cal; k++; }
+        let part = 0;
+        for (let j = k; j < L.length && L[j].s < t; j++) part += L[j].cal * (t - L[j].s) / (L[j].e - L[j].s);
+        out[i] = (done + part) * factor;
+      }
+      return out;
+    }
+  }
+  if (sessionCal > 0 && total > 0) return Float64Array.from(D.t, t => sessionCal * Math.min(1, t / total));
+  return null;
+}
+
+// Daten aus der geladenen Datei übernehmen (nutzt die bereits berechneten Messpunkte des Track Viewers)
+function setData() {
+  if (!current || !current.timed) return clearData();
+  const timed = current.timed;
+  stopPlay();
+  D.rows = timed; D.n = timed.length; D.t0 = timed[0].time;
+  D.t = timed.map(r => (r.time - D.t0) / 1000);
+  D.cum = voCum();
+  const diffs = []; for (let i = 1; i < Math.min(D.n, 3000); i++) { const d = D.t[i] - D.t[i - 1]; if (d > 0) diffs.push(d); }
+  diffs.sort((x, y) => x - y); D.dt = diffs.length ? diffs[Math.floor(diffs.length / 2)] : 1;
+  D.raw = {}; D.avail = []; D.smoothCache = {};
+  for (const def of SERIES) {
+    const arr = def.key === "kcal" ? calorieCurve() : timed.map(r => typeof r[def.key] === "number" && isFinite(r[def.key]) ? r[def.key] : NaN);
+    if (arr && arr.some(Number.isFinite)) { D.raw[def.key] = arr; D.avail.push(def.key); }
+  }
+  D.active = new Set(D.avail.filter(k => ["speed", "hr", "alt", "kcal"].includes(k)));
+  if (!D.active.size) D.active = new Set(D.avail.slice(0, 2));
+  D.idx = 0; D.m1 = D.m2 = null; D.tcur = 0; D.lastIdx = -1;
+  $("dvXmode").querySelector('option[value="km"]').disabled = !D.cum;
+  if (!D.cum && D.xmode === "km") { D.xmode = "elapsed"; $("dvXmode").value = "elapsed"; }
+  buildChips();
+  $("dvSlider").max = D.n - 1; $("dvSlider").value = 0;
+  $("dvPlay").textContent = "▶ Abspielen";
+  $("dvInfo").textContent = `${D.n.toLocaleString("de-DE")} Messpunkte, ${fmtHMS(D.t[D.n - 1])} Dauer` + (D.cum ? `, ${nf(D.cum[D.n - 1], 2)} km` : "") + ".";
+  $("dvNote").textContent = D.raw.kcal ? "Kalorien sind geschätzt: Das Gerät speichert sie nur pro Runde und gesamt, der Verlauf ist deshalb anteilig über die Runden verteilt." : "";
+  $("dv").classList.remove("hidden");
+  D.ref = current;
+  D.cache = null;
+  if (panelVisible()) render();
+  updateAll();
+}
+function onShow() { if (D.n) { render(); updateAll(); } }   // beim Öffnen des Reiters: Größe neu berechnen
+
+function smoothedSeries(key, sec) {   // gleitender Durchschnitt über sec Sekunden
+  const ck = key + "|" + sec;
+  if (D.smoothCache[ck]) return D.smoothCache[ck];
+  const raw = D.raw[key], n = raw.length, N = Math.max(1, Math.round(sec / D.dt)), half = Math.floor(N / 2);
+  const pre = new Float64Array(n + 1), cnt = new Uint32Array(n + 1), out = new Float64Array(n);
+  for (let i = 0; i < n; i++) { const ok = Number.isFinite(raw[i]); pre[i + 1] = pre[i] + (ok ? raw[i] : 0); cnt[i + 1] = cnt[i] + (ok ? 1 : 0); }
+  for (let i = 0; i < n; i++) {
+    const a = Math.max(0, i - half), b = Math.min(n, i + half + 1), c = cnt[b] - cnt[a];
+    out[i] = Number.isFinite(raw[i]) && c ? (pre[b] - pre[a]) / c : NaN;
+  }
+  return (D.smoothCache[ck] = out);
+}
+function seriesData(key) {
+  const def = SERIES.find(s => s.key === key);
+  return D.smooth > 0 && def.smooth ? smoothedSeries(key, D.smooth) : D.raw[key];
+}
+const xsNow = () => (D.xmode === "km" && D.cum) ? D.cum : D.t;
+
+function nearestIndex(xs, v) {         // Index des nächstliegenden Punktes (xs ist aufsteigend)
+  let lo = 0, hi = xs.length - 1;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (xs[mid] < v) lo = mid + 1; else hi = mid; }
+  if (lo > 0 && Math.abs(xs[lo - 1] - v) <= Math.abs(xs[lo] - v)) lo--;
+  return lo;
+}
+
+// ---------- Achsen ----------
+function axisTicks(xmin, xmax, W, mode) {
+  const want = Math.max(3, Math.floor(W / 90));
+  const steps = mode === "km" ? [0.5, 1, 2, 5, 10, 20, 25, 50, 100, 200, 500] : [60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200];
+  let step = steps[steps.length - 1];
+  for (const s of steps) if ((xmax - xmin) / s <= want) { step = s; break; }
+  const off = mode === "clock" ? secOfDay(D.t0) : 0;     // Uhrzeit-Ticks auf runde Zeiten legen
+  const out = [];
+  for (let v = Math.ceil((xmin + off) / step) * step - off; v <= xmax + 1e-9; v += step) out.push(v);
+  return { ticks: out, step };
+}
+function tickLabel(v, mode, step) {
+  if (mode === "km") return nf(v, step < 1 ? 1 : 0);
+  if (mode === "clock") { const d = new Date(D.t0.getTime() + v * 1000); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+  return `${Math.floor(v / 3600)}:${pad2(Math.floor(v % 3600 / 60))}`;
+}
+
+// ---------- Zeichnen ----------
+function render() {                     // statischer Teil in einen Zwischenspeicher zeichnen
+  if (!D.n || !panelVisible()) return;
+  const canvas = $("dvChart"), wrap = $("dvWrap");
+  const cssW = Math.max(320, wrap.clientWidth || 900);
+  const lanes = D.avail.filter(k => D.active.has(k));
+  const L = 58, R = 14, T = 8, B = 30, laneH = 104, gap = 10;
+  const cssH = T + Math.max(1, lanes.length) * laneH + Math.max(0, lanes.length - 1) * gap + B;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
+  canvas.style.height = cssH + "px";
+  D.layout = { L, R, T, B, laneH, gap, cssW, cssH, lanes, plotW: cssW - L - R, dpr };
+
+  const cache = document.createElement("canvas");
+  cache.width = canvas.width; cache.height = canvas.height;
+  const ctx = cache.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const text = css("--text") || "#1d1d1b", muted = css("--muted") || "#6b6b66", grid = css("--grid") || "#e4e4de", card = css("--card") || "#ffffff";
+  ctx.fillStyle = card; ctx.fillRect(0, 0, cssW, cssH);
+  ctx.font = "12px system-ui, -apple-system, sans-serif";
+
+  const xs = xsNow();
+  let xmin = xs[0], xmax = xs[D.n - 1]; if (xmax - xmin <= 0) xmax = xmin + 1;
+  D.layout.xmin = xmin; D.layout.xmax = xmax;
+  const W = D.layout.plotW, xPx = x => L + (x - xmin) / (xmax - xmin) * W;
+  const { ticks, step } = axisTicks(xmin, xmax, W, D.xmode);
+  const bottom = T + lanes.length * laneH + Math.max(0, lanes.length - 1) * gap;
+
+  // senkrechte Gitterlinien und x-Beschriftung
+  ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.fillStyle = muted; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (const v of ticks) {
+    const x = Math.round(xPx(v)) + .5;
+    ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, bottom); ctx.stroke();
+    ctx.fillText(tickLabel(v, D.xmode, step), x, bottom + 6);
+  }
+  ctx.textAlign = "right"; ctx.fillText(D.xmode === "km" ? "km" : D.xmode === "clock" ? "Uhrzeit" : "Zeit nach Start (h:mm)", cssW - R, bottom + 17);
+
+  lanes.forEach((key, li) => {
+    const def = SERIES.find(s => s.key === key), y0 = T + li * (laneH + gap);
+    const raw = D.raw[key], ys = seriesData(key);
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < raw.length; i++) { const v = raw[i]; if (v < lo) lo = v; if (v > hi) hi = v; }
+    if (def.zero) lo = Math.min(0, lo);
+    if (!(hi > lo)) hi = lo + 1;
+    const pad = (hi - lo) * 0.06; if (!def.zero) lo -= pad; hi += pad;
+    const yPx = v => y0 + laneH - (v - lo) / (hi - lo) * laneH;
+    D.layout["lane_" + key] = { y0, lo, hi };
+
+    ctx.fillStyle = css("--bg") || "#f6f6f4"; ctx.fillRect(L, y0, W, laneH);
+    ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(L, y0 + laneH / 2 + .5); ctx.lineTo(L + W, y0 + laneH / 2 + .5); ctx.stroke();
+
+    // pro Pixelspalte Minimum, Maximum und Mittelwert (flüssig auch bei sehr vielen Messpunkten)
+    const cols = Math.max(1, Math.floor(W));
+    const mn = new Float64Array(cols).fill(Infinity), mx = new Float64Array(cols).fill(-Infinity), sm = new Float64Array(cols), ct = new Uint32Array(cols);
+    for (let i = 0; i < D.n; i++) {
+      const v = ys[i]; if (!Number.isFinite(v)) continue;
+      let c = Math.floor((xs[i] - xmin) / (xmax - xmin) * cols); if (c < 0) c = 0; if (c >= cols) c = cols - 1;
+      if (v < mn[c]) mn[c] = v; if (v > mx[c]) mx[c] = v; sm[c] += v; ct[c]++;
+    }
+    ctx.save(); ctx.beginPath(); ctx.rect(L, y0, W, laneH); ctx.clip();
+    ctx.globalAlpha = 0.22; ctx.fillStyle = def.color;
+    for (let c = 0; c < cols; c++) if (ct[c]) { const a = yPx(mx[c]), b = yPx(mn[c]); ctx.fillRect(L + c, a, 1, Math.max(1, b - a)); }
+    ctx.globalAlpha = 1;
+    // Linie (bei Lücken von 3 Spalten und mehr unterbrochen)
+    ctx.strokeStyle = def.color; ctx.lineWidth = 1.6; ctx.lineJoin = "round"; ctx.beginPath();
+    let prev = -10, started = false, firstX = 0, lastX = 0;
+    for (let c = 0; c < cols; c++) {
+      if (!ct[c]) continue;
+      const x = L + c + .5, y = yPx(sm[c] / ct[c]);
+      if (!started || c - prev > 3) { ctx.moveTo(x, y); if (!started) firstX = x; started = true; } else ctx.lineTo(x, y);
+      prev = c; lastX = x;
+    }
+    ctx.stroke();
+    if (def.area && started) {          // Höhenprofil als Fläche
+      ctx.globalAlpha = 0.18; ctx.fillStyle = def.color; ctx.beginPath();
+      let p2 = -10, st = false;
+      for (let c = 0; c < cols; c++) { if (!ct[c]) continue; const x = L + c + .5, y = yPx(sm[c] / ct[c]); if (!st) { ctx.moveTo(x, y0 + laneH); ctx.lineTo(x, y); st = true; } else ctx.lineTo(x, y); p2 = c; }
+      ctx.lineTo(L + p2 + .5, y0 + laneH); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+
+    // Achsenwerte und Titel
+    ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.textBaseline = "top"; ctx.fillText(nf(hi - (def.zero ? 0 : pad), def.dec), L - 6, y0);
+    ctx.textBaseline = "bottom"; ctx.fillText(nf(lo + (def.zero ? 0 : pad), def.dec), L - 6, y0 + laneH);
+    ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = def.color; ctx.font = "bold 12px system-ui, -apple-system, sans-serif";
+    ctx.fillText(`${def.label} (${def.unit}${def.note ? ", " + def.note : ""})`, L + 6, y0 + 4); ctx.font = "12px system-ui, -apple-system, sans-serif";
+  });
+  if (!lanes.length) { ctx.fillStyle = muted; ctx.textAlign = "center"; ctx.fillText("Keine Anzeige gewählt", cssW / 2, T + 40); }
+  D.cache = cache;
+  draw();
+}
+
+function draw() {                       // Zwischenspeicher plus Regler und Markierungen
+  const canvas = $("dvChart"), Ly = D.layout;
+  if (!D.cache || !Ly) return;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(Ly.dpr, 0, 0, Ly.dpr, 0, 0);
+  ctx.drawImage(D.cache, 0, 0, Ly.cssW, Ly.cssH);
+  const xs = xsNow(), xPx = x => Ly.L + (x - Ly.xmin) / (Ly.xmax - Ly.xmin) * Ly.plotW;
+  const bottom = Ly.T + Ly.lanes.length * Ly.laneH + Math.max(0, Ly.lanes.length - 1) * Ly.gap;
+
+  if (D.m1 !== null || D.m2 !== null) {             // markierter Bereich
+    const a = D.m1 !== null ? xPx(xs[D.m1]) : null, b = D.m2 !== null ? xPx(xs[D.m2]) : null;
+    ctx.fillStyle = "rgba(34,160,90,.14)";
+    if (a !== null && b !== null) ctx.fillRect(Math.min(a, b), Ly.T, Math.abs(b - a), bottom - Ly.T);
+    ctx.strokeStyle = "#22a05a"; ctx.lineWidth = 2; ctx.fillStyle = "#22a05a"; ctx.font = "bold 11px system-ui, sans-serif"; ctx.textBaseline = "top";
+    [[a, "Start", "left"], [b, "Ende", "right"]].forEach(([x, label, align]) => {
+      if (x === null) return;
+      ctx.beginPath(); ctx.moveTo(x, Ly.T); ctx.lineTo(x, bottom); ctx.stroke();
+      ctx.textAlign = align === "left" ? "left" : "right"; ctx.fillText(label, x + (align === "left" ? 4 : -4), bottom - 14);
+    });
+  }
+
+  const x = xPx(cursorX());                         // Regler
+  ctx.strokeStyle = css("--accent") || "#d9480f"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x, Ly.T); ctx.lineTo(x, bottom); ctx.stroke();
+  Ly.lanes.forEach(key => {
+    const def = SERIES.find(s => s.key === key), lane = Ly["lane_" + key], v = seriesData(key)[D.idx];
+    if (!lane || !Number.isFinite(v)) return;
+    const y = lane.y0 + Ly.laneH - (v - lane.lo) / (lane.hi - lane.lo) * Ly.laneH;
+    ctx.fillStyle = def.color; ctx.strokeStyle = css("--card") || "#fff"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
+}
+
+// ---------- Anzeige der Werte ----------
+function updateReadout() {
+  const r = D.rows[D.idx], cards = [];
+  cards.push(stat("Uhrzeit", clockStr(r.time)), stat("Zeit nach Start", fmtHMS(D.t[D.idx])));
+  if (D.cum) cards.push(stat("Strecke", nf(D.cum[D.idx], 2) + " km"));
+  for (const def of SERIES) {
+    if (!D.avail.includes(def.key)) continue;
+    const v = def.key === "kcal" ? D.raw.kcal[D.idx] : r[def.key];
+    cards.push(stat(def.readLabel || def.label, typeof v === "number" && isFinite(v) ? `${nf(v, def.dec)} ${def.unit}` : "–"));
+  }
+  $("dvReadout").innerHTML = cards.join("");
+}
+function floorIndex(arr, v) {          // größter Index mit arr[i] <= v
+  let lo = 0, hi = arr.length - 1;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (arr[mid] <= v) lo = mid; else hi = mid - 1; }
+  return lo;
+}
+function cursorX() {                    // Position des Reglers auf der X-Achse, zeitlich interpoliert
+  if (D.xmode === "km" && D.cum) {
+    const i0 = floorIndex(D.t, D.tcur), i1 = Math.min(D.n - 1, i0 + 1);
+    const f = i1 > i0 ? Math.min(1, Math.max(0, (D.tcur - D.t[i0]) / (D.t[i1] - D.t[i0]))) : 0;
+    return D.cum[i0] + (D.cum[i1] - D.cum[i0]) * f;
+  }
+  return D.tcur;
+}
+function tickUI() {                    // während des Abspielens nur das Nötigste aktualisieren
+  if (D.idx !== D.lastIdx) { D.lastIdx = D.idx; $("dvSlider").value = D.idx; updateReadout(); }
+  draw();
+}
+function updateAll() { D.lastIdx = D.idx; $("dvSlider").value = D.idx; updateReadout(); updateRange(); draw(); }
+
+// ---------- Bereich ----------
+function rangeStats(i1, i2) {
+  const rows = D.rows.slice(i1, i2 + 1), dur = D.t[i2] - D.t[i1], out = [];
+  const km = D.cum ? D.cum[i2] - D.cum[i1] : undefined;
+  out.push(stat("Dauer", fmtHMS(dur)));
+  if (km !== undefined) { out.push(stat("Strecke", nf(km, 2) + " km")); if (dur > 0) out.push(stat("Ø Tempo", nf(km / dur * 3600) + " km/h")); }
+  const speeds = rows.map(r => r.speed).filter(v => typeof v === "number"), hrs = rows.map(r => r.hr).filter(v => typeof v === "number");
+  if (speeds.length) out.push(stat("Max. Tempo", nf(Math.max(...speeds.slice(0, 50000))) + " km/h"));
+  if (hrs.length) out.push(stat("Ø Puls", Math.round(hrs.reduce((a, b) => a + b, 0) / hrs.length) + " bpm"));
+  const alts = rows.map(r => r.alt).filter(v => typeof v === "number");
+  if (alts.length > 1) {
+    let gain = 0, ref = alts[0];
+    for (const v of alts) { if (v - ref >= 3) { gain += v - ref; ref = v; } else if (ref - v >= 3) ref = v; }
+    out.push(stat("Höhenmeter ↑", Math.round(gain) + " m"));
+  }
+  if (D.raw.kcal) {                         // Kalorien im Bereich (geschätzt)
+    out.push(stat("Kalorien (geschätzt)", Math.round(D.raw.kcal[i2] - D.raw.kcal[i1]) + " kcal"));
+  }
+  return out.join("");
+}
+function updateRange() {
+  const out = $("dvRangeOut"), st = $("dvRangeStats");
+  $("dvToVo").disabled = !(D.m1 !== null && D.m2 !== null && D.m1 !== D.m2);   // erst wenn Start und Ende gesetzt sind
+  if (D.m1 === null || D.m2 === null) {
+    out.textContent = D.m1 === null && D.m2 === null ? "Setze Start und Ende, dann siehst du hier den Zeitraum und seine Werte."
+      : D.m1 === null ? "Jetzt noch den Start setzen." : "Jetzt noch das Ende setzen.";
+    st.innerHTML = ""; return;
+  }
+  const i1 = Math.min(D.m1, D.m2), i2 = Math.max(D.m1, D.m2);
+  if (i1 === i2) { out.textContent = "Start und Ende liegen auf demselben Punkt."; st.innerHTML = ""; return; }
+  out.innerHTML = `<b>Zeit nach Start:</b> ${fmtHMS(D.t[i1])} bis ${fmtHMS(D.t[i2])} &nbsp;·&nbsp; <b>Uhrzeit:</b> ${clockStr(D.rows[i1].time)} bis ${clockStr(D.rows[i2].time)}` +
+    (D.cum ? ` &nbsp;·&nbsp; <b>Kilometer:</b> ${nf(D.cum[i1], 2)} bis ${nf(D.cum[i2], 2)}` : "");
+  st.innerHTML = rangeStats(i1, i2);
+}
+
+// ---------- Bedienung ----------
+function buildChips() {
+  const box = $("dvChips"); box.innerHTML = "";
+  for (const key of D.avail) {
+    const def = SERIES.find(s => s.key === key);
+    const lab = document.createElement("label"); lab.className = "chip";
+    lab.innerHTML = `<input type="checkbox" ${D.active.has(key) ? "checked" : ""}><span class="dot" style="background:${def.color}"></span>${def.label}`;
+    lab.querySelector("input").addEventListener("change", e => { e.target.checked ? D.active.add(key) : D.active.delete(key); render(); });
+    box.appendChild(lab);
+  }
+}
+function indexFromEvent(e) {
+  const rect = $("dvChart").getBoundingClientRect(), Ly = D.layout;
+  const px = Math.min(Math.max(e.clientX - rect.left, Ly.L), Ly.L + Ly.plotW);
+  return nearestIndex(xsNow(), Ly.xmin + (px - Ly.L) / Ly.plotW * (Ly.xmax - Ly.xmin));
+}
+function stopPlay() { D.playing = false; $("dvPlay").textContent = "▶ Abspielen"; }
+function setIndex(i) { D.idx = Math.min(D.n - 1, Math.max(0, i)); D.tcur = D.t[D.idx]; updateAll(); }
+
+let dragging = false;
+$("dvChart").addEventListener("pointerdown", e => { if (!D.layout) return; dragging = true; stopPlay(); $("dvChart").setPointerCapture && $("dvChart").setPointerCapture(e.pointerId); setIndex(indexFromEvent(e)); });
+$("dvChart").addEventListener("pointermove", e => { if (dragging) setIndex(indexFromEvent(e)); });
+["pointerup", "pointercancel"].forEach(ev => $("dvChart").addEventListener(ev, () => { dragging = false; }));
+$("dvSlider").addEventListener("input", e => { stopPlay(); setIndex(+e.target.value); });
+$("dvBack").addEventListener("click", () => { stopPlay(); setIndex(nearestIndex(D.t, D.t[D.idx] - 10)); });
+$("dvFwd").addEventListener("click", () => { stopPlay(); setIndex(nearestIndex(D.t, D.t[D.idx] + 10)); });
+$("dvXmode").addEventListener("change", e => { D.xmode = e.target.value; render(); updateAll(); });
+$("dvSmooth").addEventListener("change", e => { D.smooth = +e.target.value; render(); });
+$("dvSpeed").addEventListener("change", e => { D.speed = +e.target.value; });
+$("dvSetStart").addEventListener("click", () => { D.m1 = D.idx; updateRange(); draw(); });
+$("dvSetEnd").addEventListener("click", () => { D.m2 = D.idx; updateRange(); draw(); });
+$("dvClear").addEventListener("click", () => { D.m1 = D.m2 = null; updateRange(); draw(); });
+$("dvToVo").addEventListener("click", () => {            // Zeitraum an die Seitenleiste übergeben (als "Zeit nach Start")
+  if (D.m1 === null || D.m2 === null || D.m1 === D.m2) return;
+  const i1 = Math.min(D.m1, D.m2), i2 = Math.max(D.m1, D.m2);
+  stopPlay();
+  $("voTimeMode").value = "dur"; $("voFrom").value = fmtHMS(D.t[i1]); $("voTo").value = fmtHMS(D.t[i2]);
+  $("voFrom").dataset.mode = $("voTo").dataset.mode = "dur"; $("voFrom").placeholder = $("voTo").placeholder = "h:mm:ss"; $("voFrom").inputMode = $("voTo").inputMode = "numeric";
+  $("voColl").open = true;
+  voRun();
+  setTab("tabVo");
+  const hint = $("voTimeResult");
+  if (hint && !$("voTimeMsg").textContent) hint.textContent = `Aus dem Data-Viewer übernommen: ${fmtHMS(D.t[i1])} bis ${fmtHMS(D.t[i2])} nach Start (${clockStr(D.rows[i1].time)} bis ${clockStr(D.rows[i2].time)} Uhr).`;
+});
+
+function frame(ts) {
+  if (!D.playing) return;
+  if (!panelVisible()) { stopPlay(); return; }
+  const dt = (ts - D.last) / 1000; D.last = ts;
+  D.tcur += dt * D.speed;
+  const end = D.t[D.n - 1];
+  if (D.tcur >= end) { D.tcur = end; D.idx = D.n - 1; stopPlay(); updateAll(); return; }
+  D.idx = nearestIndex(D.t, D.tcur); tickUI();
+  requestAnimationFrame(frame);
+}
+$("dvPlay").addEventListener("click", () => {
+  if (!D.n) return;
+  if (D.playing) return stopPlay();
+  if (D.idx >= D.n - 1) setIndex(0);
+  D.tcur = D.t[D.idx]; D.playing = true; D.last = performance.now();
+  $("dvPlay").textContent = "⏸ Pause"; requestAnimationFrame(frame);
+});
+
+if (window.ResizeObserver) new ResizeObserver(() => { if (D.n) render(); }).observe($("dvWrap"));
+window.addEventListener("resize", () => { if (D.n) render(); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (D.n) render(); });
+
+
+return { setData, onShow, pause: stopPlay, clear: clearData };
+})();
+
+// ---------- Export der Seitenleiste: PNG-Sequenz, MOV "Animation", MOV aus PNG ----------
+const EXP = (() => {
+  // ---------- Export-Kern: QuickTime-Animation (RLE), MOV-Gerüst, ZIP ----------
+  // Bytes zusammenfügen
+  const bConcat = parts => { let n = 0; for (const p of parts) n += p.length; const o = new Uint8Array(n); let k = 0; for (const p of parts) { o.set(p, k); k += p.length; } return o; };
+  const be16 = v => new Uint8Array([(v >> 8) & 255, v & 255]);
+  const be32 = v => new Uint8Array([(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]);
+  const ascii = s => Uint8Array.from(s, c => c.charCodeAt(0) & 255);
+  const zeros = n => new Uint8Array(n);
+  const mbox = (type, ...payload) => { const body = bConcat(payload); return bConcat([be32(8 + body.length), ascii(type), body]); };
+
+  // ----- QuickTime Animation ("rle ", 32 Bit ARGB, verlustfrei mit Alpha) -----
+  // Nimmt RGBA-Bilder (z. B. ImageData.data) und erzeugt pro Bild ein MOV-Sample.
+  function createRleEncoder(W, H) {
+    let prev = null;                                                // Pixel des vorherigen Bildes (Uint32Array)
+    const cap = 16 + H * (W * 4 + Math.ceil(W / 127) * 1 + 2 * Math.ceil(W / 254) + 16) + 64;
+    const buf = new Uint8Array(cap);
+    return function encode(rgba, forceKey) {
+      const cur = new Uint32Array(rgba.buffer, rgba.byteOffset, W * H);
+      let p = 0;
+      const put = v => { buf[p++] = v; };
+      const putPx = i => { const q = i * 4; buf[p++] = rgba[q + 3]; buf[p++] = rgba[q]; buf[p++] = rgba[q + 1]; buf[p++] = rgba[q + 2]; };
+      const isKey = forceKey || !prev;
+      let y0 = 0, y1 = H - 1;
+      if (!isKey) {                                                  // geänderten Zeilenbereich bestimmen
+        y0 = -1;
+        for (let y = 0; y < H && y0 < 0; y++) { for (let x = 0, o = y * W; x < W; x++) if (cur[o + x] !== prev[o + x]) { y0 = y; break; } }
+        if (y0 < 0) { prev = Uint32Array.from(cur); return new Uint8Array([0, 0, 0, 7, 0, 0, 0]); }   // unverändert: 7-Byte-Sample
+        for (let y = H - 1; y >= y0; y--) { let ch = false; for (let x = 0, o = y * W; x < W; x++) if (cur[o + x] !== prev[o + x]) { ch = true; break; } if (ch) { y1 = y; break; } }
+      }
+      p = 4;                                                         // Platz für die Größe
+      if (isKey) { put(0); put(0); } else { put(0); put(8); put(y0 >> 8); put(y0 & 255); put(0); put(0); const n = y1 - y0 + 1; put(n >> 8); put(n & 255); put(0); put(0); }
+      const skipChain = (gap, first) => {                             // Überspringen von Pixeln (max. 254 pro Code)
+        let rem = gap;
+        if (first) { const k = Math.min(rem, 254); put(k + 1); rem -= k; }
+        while (rem > 0) { const k = Math.min(rem, 254); put(0); put(k + 1); rem -= k; }
+      };
+      const stretch = (o, a, b) => {                                  // Pixel a..b-1 einer Zeile: Läufe und Kopien
+        let i = a, litStart = -1;
+        const flush = end => { while (litStart >= 0 && litStart < end) { const n = Math.min(127, end - litStart); put(n); for (let j = 0; j < n; j++) putPx(o + litStart + j); litStart += n; } litStart = -1; };
+        while (i < b) {
+          let r = 1; while (i + r < b && r < 128 && cur[o + i + r] === cur[o + i]) r++;
+          if (r >= 2) { flush(i); put(256 - r); putPx(o + i); i += r; }
+          else { if (litStart < 0) litStart = i; i++; if (i - litStart === 127) flush(i); }
+        }
+        flush(i);
+      };
+      for (let y = y0; y <= y1; y++) {
+        const o = y * W; let x = 0, first = true;
+        while (x < W) {
+          let a = x;
+          if (isKey) a = x; else while (a < W && cur[o + a] === prev[o + a]) a++;
+          if (a >= W) { skipChain(a - x, first); first = false; x = W; break; }
+          let b = a + 1;
+          if (isKey) b = W;
+          else while (b < W) {
+            if (cur[o + b] !== prev[o + b]) { b++; continue; }
+            let g = b; while (g < W && cur[o + g] === prev[o + g]) g++;
+            if (g >= W || g - b >= 3) break;                          // größere Lücke: Kopierstück endet
+            b = g;
+          }
+          skipChain(a - x, first); first = false;
+          stretch(o, a, b); x = b;
+        }
+        if (first) put(1);                                            // (nur bei Breite 0 nötig)
+        put(255);                                                     // Zeilenende
+      }
+      if (p & 1) put(0);                                              // gerade Länge
+      buf[0] = (p >>> 24) & 255; buf[1] = (p >>> 16) & 255; buf[2] = (p >>> 8) & 255; buf[3] = p & 255;
+      prev = Uint32Array.from(cur);
+      return buf.slice(0, p);
+    };
+  }
+
+  // ----- MOV-Datei (QuickTime) aus fertigen Samples -----
+  // samples: [{ data: Uint8Array, sync: bool, ref: Index eines früheren Samples mit denselben Bytes (optional) }]
+  // fourcc: "rle " oder "png "; liefert { blob, size }
+  function buildMov({ fourcc, width, height, fps, samples, compressor }) {
+    const TS = 600, delta = TS / fps, N = samples.length, duration = N * delta;
+    // Daten und Offsets
+    const parts = []; let cursor = 0;
+    for (const s of samples) { if (s.ref !== undefined && s.ref >= 0) s.off = samples[s.ref].off; else { s.off = cursor; cursor += s.data.length; parts.push(s.data); } }
+    const mdatHdr = 8, dataStart = 20 + mdatHdr;
+    if (dataStart + cursor >= 4294967295) throw new Error("Die Datei wäre größer als 4 GB, das unterstützt der Export nicht.");
+    const mat = bConcat([be32(0x10000), be32(0), be32(0), be32(0), be32(0x10000), be32(0), be32(0), be32(0), be32(0x40000000)]);
+    const mvhd = mbox("mvhd", zeros(4), be32(0), be32(0), be32(TS), be32(duration), be32(0x10000), be16(0x100), zeros(10), mat, zeros(24), be32(2));
+    const tkhd = mbox("tkhd", be32(3), be32(0), be32(0), be32(1), be32(0), be32(duration), zeros(8), be16(0), be16(0), be16(0), be16(0), mat, be32(width * 65536), be32(height * 65536));
+    const edts = mbox("edts", mbox("elst", zeros(4), be32(1), be32(duration), be32(0), be32(0x10000)));
+    const mdhd = mbox("mdhd", zeros(4), be32(0), be32(0), be32(TS), be32(duration), be16(0x7fff), be16(0));
+    const hdlr1 = mbox("hdlr", zeros(4), ascii("mhlr"), ascii("vide"), zeros(12), new Uint8Array([12]), ascii("VideoHandler"));
+    const vmhd = mbox("vmhd", be32(1), zeros(8));
+    const hdlr2 = mbox("hdlr", zeros(4), ascii("dhlr"), ascii("url "), zeros(12), new Uint8Array([11]), ascii("DataHandler"));
+    const dinf = mbox("dinf", mbox("dref", zeros(4), be32(1), mbox("url ", be32(1))));
+    const name = ascii((compressor || "Track Viewer").slice(0, 31)), nameField = bConcat([new Uint8Array([name.length]), name, zeros(31 - name.length)]);
+    const entry = bConcat([be32(96), ascii(fourcc), zeros(6), be16(1), be16(0), be16(0), be32(0), be32(512), be32(512), be16(width), be16(height),
+      be32(0x480000), be32(0x480000), be32(0), be16(1), nameField, be16(32), be16(0xffff), be32(10), ascii("fiel"), new Uint8Array([1, 0])]);
+    const stsd = mbox("stsd", zeros(4), be32(1), entry);
+    const stts = mbox("stts", zeros(4), be32(1), be32(N), be32(delta));
+    const syncs = []; samples.forEach((s, i) => { if (s.sync) syncs.push(i + 1); });
+    const stss = syncs.length < N ? mbox("stss", zeros(4), be32(syncs.length), ...syncs.map(be32)) : null;
+    // Chunks: Animation = Gruppen von 1 s; PNG = ein Sample je Chunk (erlaubt gemeinsam genutzte Bilder)
+    const perChunk = fourcc === "rle " ? Math.max(1, Math.round(fps)) : 1;
+    const chunkOffsets = [], stscEntries = []; let i = 0, ci = 0;
+    while (i < N) { const n = Math.min(perChunk, N - i); chunkOffsets.push(dataStart + samples[i].off); if (!stscEntries.length || stscEntries[stscEntries.length - 1][1] !== n) stscEntries.push([ci + 1, n, 1]); i += n; ci++; }
+    const stsc = mbox("stsc", zeros(4), be32(stscEntries.length), ...stscEntries.map(e => bConcat([be32(e[0]), be32(e[1]), be32(e[2])])));
+    const stsz = mbox("stsz", zeros(4), be32(0), be32(N), ...samples.map(s => be32(s.data.length)));
+    const stco = mbox("stco", zeros(4), be32(chunkOffsets.length), ...chunkOffsets.map(be32));
+    const stbl = mbox("stbl", stsd, stts, ...(stss ? [stss] : []), stsc, stsz, stco);
+    const minf = mbox("minf", vmhd, hdlr2, dinf, stbl);
+    const moov = mbox("moov", mvhd, mbox("trak", tkhd, edts, mbox("mdia", mdhd, hdlr1, minf)));
+    const ftyp = bConcat([be32(20), ascii("ftyp"), ascii("qt  "), be32(0x200), ascii("qt  ")]);
+    const mdatHead = bConcat([be32(8 + cursor), ascii("mdat")]);
+    const blob = new Blob([ftyp, mdatHead, ...parts, moov], { type: "video/quicktime" });
+    return { blob, size: 20 + 8 + cursor + moov.length };
+  }
+
+  // ----- ZIP (ohne Kompression) -----
+  const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function makeZip(files) {
+    const enc = new TextEncoder(), parts = [], central = []; let offset = 0;
+    const d = new Date(), dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    const le16 = v => [v & 255, (v >> 8) & 255], le32 = v => [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255];
+    for (const f of files) {
+      const nm = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+      const head = new Uint8Array([0x50, 0x4b, 3, 4, 20, 0, 0, 8, 0, 0, ...le16(dosTime), ...le16(dosDate), ...le32(crc), ...le32(size), ...le32(size), ...le16(nm.length), 0, 0]);
+      parts.push(head, nm, f.data);
+      central.push(new Uint8Array([0x50, 0x4b, 1, 2, 20, 0, 20, 0, 0, 8, 0, 0, ...le16(dosTime), ...le16(dosDate), ...le32(crc), ...le32(size), ...le32(size), ...le16(nm.length), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...le32(offset)]), nm);
+      offset += head.length + nm.length + size;
+    }
+    const cdSize = central.reduce((a, p) => a + p.length, 0);
+    parts.push(...central, new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0, ...le16(files.length), ...le16(files.length), ...le32(cdSize), ...le32(offset), 0, 0]));
+    return new Blob(parts, { type: "application/zip" });
+  }
+
+
+  const FONT = 'system-ui, "Segoe UI", Roboto, sans-serif';
+  const HARD_LIMIT = 1.5e9, WARN_LIMIT = 5e8;          // vorsichtige Schätzwerte für den Speicher des Browsers
+  const K = { ref: null };                                // vorberechnete Daten der geladenen Datei
+  const R = { start: 0 };                                 // Daten für den gewählten Zeitraum
+  let running = false, cancelFlag = false, lastEstimate = null;
+  // kurze Pause für die Oberfläche; MessageChannel wird (anders als setTimeout) in Hintergrund-Tabs nicht stark gebremst
+  const sleep0 = () => typeof MessageChannel !== "undefined" ? new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => { c.port1.close(); r(); }; c.port2.postMessage(0); }) : new Promise(r => setTimeout(r, 0));
+  const blobBytes = b => b.arrayBuffer ? b.arrayBuffer().then(x => new Uint8Array(x)) : new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(new Uint8Array(f.result)); f.onerror = rej; f.readAsArrayBuffer(b); });
+  const sizeText = b => b >= 1e9 ? (b / 1e9).toFixed(2).replace(".", ",") + " GB" : b >= 1e6 ? (b / 1e6).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1e3)) + " KB";
+  const kind = () => document.querySelector('input[name="exFormat"]:checked').value;
+
+  // ----- Daten der Aktivität vorbereiten -----
+  function prepareData() {
+    if (K.ref === current) return;
+    const rows = current.timed, n = rows.length, t0 = current.t0;
+    K.ref = current; K.n = n; K.t = new Float64Array(n);
+    rows.forEach((r, i) => { K.t[i] = (r.time - t0) / 1000; });
+    const col = key => Float64Array.from(rows, r => typeof r[key] === "number" && isFinite(r[key]) ? r[key] : NaN);
+    K.speed = col("speed"); K.hr = col("hr"); K.alt = col("alt"); K.power = col("power"); K.cad = col("cad");
+    K.cum = voCum();
+    K.move = new Float64Array(n);
+    K.hrSum = new Float64Array(n + 1); K.hrCnt = new Uint32Array(n + 1); K.pwSum = new Float64Array(n + 1); K.pwCnt = new Uint32Array(n + 1); K.cdSum = new Float64Array(n + 1); K.cdCnt = new Uint32Array(n + 1);
+    for (let i = 0; i < n; i++) {
+      if (i > 0) { const dt = K.t[i] - K.t[i - 1]; K.move[i] = K.move[i - 1] + (dt > 0 && dt <= 30 && Number.isFinite(K.speed[i]) && K.speed[i] >= 1 ? dt : 0); }
+      const h = K.hr[i], p = K.power[i], c = K.cad[i];
+      K.hrSum[i + 1] = K.hrSum[i] + (Number.isFinite(h) ? h : 0); K.hrCnt[i + 1] = K.hrCnt[i] + (Number.isFinite(h) ? 1 : 0);
+      K.pwSum[i + 1] = K.pwSum[i] + (Number.isFinite(p) ? p : 0); K.pwCnt[i + 1] = K.pwCnt[i] + (Number.isFinite(p) ? 1 : 0);
+      K.cdSum[i + 1] = K.cdSum[i] + (Number.isFinite(c) && c > 0 ? c : 0); K.cdCnt[i + 1] = K.cdCnt[i] + (Number.isFinite(c) && c > 0 ? 1 : 0);
+    }
+    const laps = (current.rows.laps || []).filter(l => l.cal !== undefined && l.start && (l.elapsed || l.end));
+    K.sessionCal = (current.rows.sessions || []).filter(x => x.cal !== undefined && x.cal > 0).reduce((a, x) => a + x.cal, 0);
+    K.laps = laps.map(l => { const s = (l.start - t0) / 1000; return { s, e: s + (l.elapsed ? l.elapsed : (l.end - l.start) / 1000), cal: l.cal }; }).filter(l => l.e > l.s);
+    if (!K.sessionCal) K.sessionCal = K.laps.reduce((a, l) => a + l.cal, 0);
+    K.total = K.t[n - 1];
+  }
+  function prepareRange(i0, i1) {                   // vom Start abhängige Zwischenwerte (Höhenmeter, laufende Höchstwerte)
+    const n = K.n; R.i0 = i0; R.i1 = i1; R.ts = K.t[i0]; R.te = K.t[i1];
+    R.gain = new Float64Array(n); R.maxSp = new Float64Array(n); R.maxHr = new Float64Array(n); R.maxPw = new Float64Array(n); R.maxAlt = new Float64Array(n);
+    let gain = 0, ref = NaN, ms = 0, mh = -Infinity, mp = -Infinity, ma = -Infinity;
+    for (let i = i0; i <= i1; i++) {
+      const a = K.alt[i];
+      if (Number.isFinite(a)) { if (!Number.isFinite(ref)) ref = a; const d = a - ref; if (d >= 3) { gain += d; ref = a; } else if (d <= -3) ref = a; if (a > ma) ma = a; }
+      if (Number.isFinite(K.speed[i]) && K.speed[i] > ms) ms = K.speed[i];
+      if (Number.isFinite(K.hr[i]) && K.hr[i] > mh) mh = K.hr[i];
+      if (Number.isFinite(K.power[i]) && K.power[i] > mp) mp = K.power[i];
+      R.gain[i] = gain; R.maxSp[i] = ms; R.maxHr[i] = mh; R.maxPw[i] = mp; R.maxAlt[i] = ma;
+    }
+  }
+  function floorIdx(v) { let lo = 0, hi = K.n - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (K.t[mid] <= v) lo = mid; else hi = mid - 1; } return lo; }
+  function calBetween(ts, tc) {                     // geschätzt: Runden anteilig, sonst Gesamtsumme anteilig
+    if (!K.sessionCal) return null;
+    if (ts <= 0.5 && tc >= K.total - 0.5) return K.sessionCal;
+    if (K.laps.length) { let k = 0; for (const l of K.laps) { const ov = Math.min(l.e, tc) - Math.max(l.s, ts), len = l.e - l.s; if (ov > 0 && len > 0) k += l.cal * ov / len; } return k; }
+    return K.total > 0 ? K.sessionCal * (tc - ts) / K.total : 0;
+  }
+  function valuesAt(tc) {                           // alle Felder der Seitenleiste für die Zeit tc (Sekunden seit Aktivitätsbeginn)
+    const zero = { strecke: 0, anstieg: 0, zeit: 0, pause: 0, gesamt: 0, avgSpeed: 0, maxSpeed: 0, avgHr: null, maxHr: null, kcal: 0, avgPower: 0, maxPower: 0, avgCad: 0, altMax: null };
+    if (tc - R.ts < 1) return zero;
+    const s = R.i0, i0 = Math.max(s, Math.min(R.i1, floorIdx(tc))), i1 = Math.min(K.n - 1, i0 + 1);
+    const f = i1 > i0 ? Math.min(1, Math.max(0, (tc - K.t[i0]) / (K.t[i1] - K.t[i0]))) : 0, lerp = (a, b) => a + (b - a) * f, dur = tc - R.ts;
+    const v = { gesamt: dur };
+    v.strecke = K.cum ? lerp(K.cum[i0], K.cum[i1]) - K.cum[s] : 0;
+    v.anstieg = lerp(R.gain[i0], R.gain[Math.min(R.i1, i1)]);
+    const mv = lerp(K.move[i0], K.move[i1]) - K.move[s]; v.zeit = mv; v.pause = Math.max(0, dur - mv);
+    v.avgSpeed = mv > 0.5 ? v.strecke / mv * 3600 : 0; v.maxSpeed = R.maxSp[i0];
+    const hc = K.hrCnt[i0 + 1] - K.hrCnt[s]; v.avgHr = hc ? (K.hrSum[i0 + 1] - K.hrSum[s]) / hc : null; v.maxHr = hc ? R.maxHr[i0] : null;
+    const pc = K.pwCnt[i0 + 1] - K.pwCnt[s]; v.avgPower = pc ? (K.pwSum[i0 + 1] - K.pwSum[s]) / pc : 0; v.maxPower = pc ? R.maxPw[i0] : 0;
+    const cc = K.cdCnt[i0 + 1] - K.cdCnt[s]; v.avgCad = cc ? (K.cdSum[i0 + 1] - K.cdSum[s]) / cc : 0;
+    v.altMax = Number.isFinite(R.maxAlt[i0]) ? R.maxAlt[i0] : null;
+    const kc = calBetween(R.ts, tc); v.kcal = kc === null ? 0 : kc;
+    return v;
+  }
+  function fmtField(id, v) {
+    if (v === null || v === undefined || Number.isNaN(v)) return "-";
+    if (id === "strecke") return nfp(v, 2);
+    if (id === "zeit" || id === "pause" || id === "gesamt") return fmtHMS(v);
+    if (id === "avgSpeed" || id === "maxSpeed") return nfp(v, 1);
+    return String(Math.round(v));
+  }
+  function readLayout() {                           // aktuellen Stand der Seitenleiste lesen (Layout, Namen, Summen, Titel)
+    const rows = [];
+    for (const z of ["1", "2", "3", "4", "5", "6", "7"]) { const fs = voZoneIds(z).map(voField).filter(f => $("voVal_" + f.id).value.trim() !== ""); if (fs.length) rows.push(fs); }
+    const names = {}, sums = {};
+    for (const f of VO_FIELDS) { names[f.id] = $("voName_" + f.id).value.trim() || f.label; sums[f.id] = $("voSum_" + f.id) ? $("voSum_" + f.id).value.trim() : ""; }
+    return { rows, names, sums, title: $("voTitle").value.trim(), side: $("voSide").value, width: $("voWidth").value };
+  }
+  function totalText(L, f, val) {
+    const raw = L.sums[f.id]; if (!f.sum || !raw) return "";
+    if (f.sum === "time") { const a = parseTime(raw), b = parseTime(val); return a === null || b === null ? "" : fmtHMS(a + b); }
+    const a = parseNum(raw), b = parseNum(val); return isNaN(a) || isNaN(b) ? "" : nfp(a + b, (val.split(",")[1] || "").length);
+  }
+  function cardsFor(L, tv) {
+    const v = valuesAt(tv);
+    return L.rows.map(row => row.map(f => { const val = fmtField(f.id, v[f.id]); return { label: L.names[f.id], value: val, unit: f.unit, total: totalText(L, f, val) }; }));
+  }
+
+  // ----- Zeichner (Canvas), Aussehen wie die Seitenleiste -----
+  function rrect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+  function wrapLabel(c, text, maxW) {
+    c.font = `bold 16px ${FONT}`; const lines = []; let cur = "";
+    for (const word of text.split(" ")) { const t = cur ? cur + " " + word : word; if (!cur || c.measureText(t).width <= maxW) cur = t; else { lines.push(cur); cur = word; } }
+    if (cur) lines.push(cur); return lines;
+  }
+  function drawCard(c, d, x, y, w, h, lines) {
+    c.fillStyle = "rgba(15,17,23,.68)"; rrect(c, x, y, w, h, 12); c.fill();
+    c.strokeStyle = "rgba(255,255,255,.07)"; c.lineWidth = 1; rrect(c, x + .5, y + .5, w - 1, h - 1, 12); c.stroke();
+    c.fillStyle = "#f97316"; c.font = `bold 16px ${FONT}`; lines.forEach((l, i) => c.fillText(l, x + 20, y + 28 + i * 20));
+    let f = 1;
+    const width = k => { c.font = `bold ${44 * k}px ${FONT}`; let s = c.measureText(d.value).width;
+      if (d.unit) { c.font = `500 ${17 * k}px ${FONT}`; s += 8 * k + c.measureText(d.unit).width; }
+      if (d.total) { c.font = `${21 * k}px ${FONT}`; s += 8 * k + c.measureText("/").width; c.font = `600 ${24 * k}px ${FONT}`; s += 8 * k + c.measureText(d.total).width; if (d.unit) { c.font = `500 ${17 * k}px ${FONT}`; s += 8 * k + c.measureText(d.unit).width; } }
+      return s; };
+    while (f > 0.5 && width(f) > w - 40) f -= 0.04;
+    const base = y + h - 16; let x0 = x + 20;
+    const put = (t, font, color, after) => { c.font = font; c.fillStyle = color; c.fillText(t, x0, base); x0 += c.measureText(t).width + after; };
+    put(d.value, `bold ${44 * f}px ${FONT}`, "#f4f5f7", 8 * f);
+    if (d.unit) put(d.unit, `500 ${17 * f}px ${FONT}`, "#8b90a0", 8 * f);
+    if (d.total) { put("/", `${21 * f}px ${FONT}`, "#8b90a0", 8 * f); put(d.total, `600 ${24 * f}px ${FONT}`, "#8b90a0", 8 * f); if (d.unit) put(d.unit, `500 ${17 * f}px ${FONT}`, "#8b90a0", 0); }
+  }
+  function drawFrame(ctx, W, H, L, cards) {         // Entwurfsgröße 1920 x 1080, wird auf W x H skaliert; Hintergrund bleibt transparent
+    const sc = W / 1920, c = ctx;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H); c.setTransform(sc, 0, 0, sc, 0, 0); c.textBaseline = "alphabetic";
+    const pw = { narrow: 384, normal: 480, wide: 640 }[L.width] || 480, left = L.side === "left" ? 0 : 1920 - pw, pad = 40, gap = 16, cardH = 100, inner = pw - 2 * pad;
+    let y = 56;
+    if (L.title) {
+      let fs = 34; c.font = `bold ${fs}px ${FONT}`; while (fs > 18 && c.measureText(L.title).width > inner) { fs -= 2; c.font = `bold ${fs}px ${FONT}`; }
+      c.fillStyle = "#f4f5f7"; c.shadowColor = "rgba(0,0,0,.7)"; c.shadowBlur = 10 * sc; c.shadowOffsetY = 2 * sc;
+      c.fillText(L.title, left + pad, y + 34); c.shadowColor = "transparent"; c.shadowBlur = 0; c.shadowOffsetY = 0; y += 34 + 22;
+    }
+    for (const row of cards) {
+      const cw = (inner - gap * (row.length - 1)) / row.length, labels = row.map(d => wrapLabel(c, d.label, cw - 40)), rowH = cardH + (Math.max(...labels.map(l => l.length)) - 1) * 20;
+      row.forEach((d, i) => drawCard(c, d, left + pad + i * (cw + gap), y, cw, rowH, labels[i]));
+      y += rowH + gap;
+    }
+  }
+
+  // ----- Planung -----
+  const fpsOf = k => k === "png" ? 1 : +$("exFps").value;
+  const smoothOf = k => k !== "png" && $("exSmooth").checked && fpsOf(k) > 1;
+  const shareOf = k => k === "movpng" && $("exShare").checked;
+  function plan() {
+    if (!current || !current.timed) return { error: "Lade zuerst eine Datei." };
+    if (!current.voRange) return { error: "Wähle oben einen Zeitraum von mindestens zwei Sekunden (nicht den Startzustand)." };
+    if (voError) return { error: "Das Layout hat einen Fehler (siehe oben). Bitte zuerst beheben." };
+    const k = kind(), fps = fpsOf(k), { i0, i1 } = current.voRange, dur = current.timed[i1] && (current.timed[i1].time - current.timed[i0].time) / 1000;
+    if (!(dur >= 1)) return { error: "Der gewählte Zeitraum ist kürzer als eine Sekunde." };
+    const [W, H] = $("voRes").value.split("x").map(Number), n = Math.floor(dur * fps + 1e-6) + 1, distinct = smoothOf(k) ? n : Math.floor(dur + 1e-6) + 1;
+    return { k, fps, i0, i1, dur, W, H, n, distinct, smooth: smoothOf(k), share: shareOf(k) };
+  }
+  function stamp(P) { const a = current.timed[P.i0].time, b = current.timed[P.i1].time, f = d => `${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`; return `${f(a)}-${f(b)}`; }
+  function frameTime(P, kk) { const tc = Math.min(R.te, R.ts + kk / P.fps); return P.smooth ? tc : R.ts + Math.floor(tc - R.ts + 1e-9); }
+  function setup(P) { prepareData(); prepareRange(P.i0, P.i1); const canvas = document.createElement("canvas"); canvas.width = P.W; canvas.height = P.H; return { canvas, ctx: canvas.getContext("2d", { willReadFrequently: true }), L: readLayout() }; }
+  const toPng = canvas => new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error("PNG konnte nicht erzeugt werden")), "image/png")).then(blobBytes);
+
+  // ----- Größe schätzen -----
+  async function estimate() {
+    const P = plan(); if (P.error) return { error: P.error };
+    const S = setup(P), mid = R.ts + Math.floor(P.dur / 2), draw = t => drawFrame(S.ctx, P.W, P.H, S.L, cardsFor(S.L, t));
+    let png = 0; const times = [R.ts, mid, Math.max(R.ts, R.te - 1)];
+    for (const t of times) { draw(t); png += (await toPng(S.canvas)).length; } png /= times.length;
+    let bytes;
+    if (P.k === "png") bytes = (Math.floor(P.dur) + 1) * (png + 80) + 2000;
+    else if (P.k === "movpng") bytes = (P.share ? P.distinct : P.n) * png + P.n * 16 + 2000;
+    else {
+      const enc = createRleEncoder(P.W, P.H), keyEvery = Math.max(10, Math.round(P.fps * 2));
+      draw(mid); const kb = enc(S.ctx.getImageData(0, 0, P.W, P.H).data, true).length;
+      draw(mid + 1); const db = enc(S.ctx.getImageData(0, 0, P.W, P.H).data, false).length;
+      const keys = Math.ceil(P.n / keyEvery); bytes = keys * kb + Math.max(0, P.distinct - keys) * db + (P.n - P.distinct) * 7 + P.n * 16 + 2000;
+    }
+    lastEstimate = { bytes, key: P.k + "|" + P.fps + "|" + P.smooth + "|" + P.share + "|" + P.W + "|" + P.i0 + "|" + P.i1 };
+    return { bytes, P };
+  }
+
+  // ----- Exportieren -----
+  const ZIPTEXT = P => `PNG-Sequenz der Seitenleiste\r\nAuflösung: ${P.W}x${P.H}, ${P.n} Bilder, 1 Bild pro Sekunde, transparenter Hintergrund.\r\n\r\n` +
+    `So benutzt du sie:\r\n1. ZIP entpacken.\r\n2. Im Schnittprogramm den Ordner als Bildsequenz importieren.\r\n3. DaVinci Resolve: Clip-Attribute -> Video-Bildrate auf 1 fps stellen, dann über das Video legen.\r\n\r\n` +
+    `Optional als ProRes-Video mit Alpha (mit dem kostenlosen Programm ffmpeg), jedes Bild 1 Sekunde lang auf 30 fps:\r\nffmpeg -framerate 1 -i seitenleiste_%04d.png -vf fps=30 -c:v prores_ks -profile:v 4444 -pix_fmt yuva444p10le -vendor apl0 seitenleiste.mov\r\n`;
+  async function run(report) {
+    const P = plan(); if (P.error) throw new Error(P.error);
+    const est = await estimate(); if (est.bytes > HARD_LIMIT) throw new Error(`Die Datei würde etwa ${sizeText(est.bytes)} groß. Das ist für den Browser zu viel. Wähle einen kürzeren Zeitraum, eine niedrigere Auflösung oder eine andere Option.`);
+    const S = setup(P), { canvas, ctx, L } = S, name = `seitenleiste_${stamp(P)}_${P.W}x${P.H}`;
+    const samples = [], files = []; let enc = null, prevKey = null, prevData = null, prevRef = -1, total = 0, lastYield = performance.now();
+    const keyEvery = Math.max(10, Math.round(P.fps * 2));
+    if (P.k === "rle") enc = createRleEncoder(P.W, P.H);
+    const frames = P.k === "png" ? Math.floor(P.dur + 1e-6) + 1 : P.n;
+    for (let kk = 0; kk < frames; kk++) {
+      if (cancelFlag) throw new Error("Abgebrochen.");
+      const tv = P.k === "png" ? Math.min(R.te, R.ts + kk) : frameTime(P, kk), cards = cardsFor(L, tv), key = JSON.stringify(cards.map(r => r.map(c => [c.value, c.total])));
+      const same = key === prevKey, isKey = P.k === "rle" && kk % keyEvery === 0;
+      if (same && !isKey && P.k !== "png") {                                    // unverändertes Bild: nichts neu zeichnen
+        samples.push(P.k === "rle" ? { data: new Uint8Array([0, 0, 0, 7, 0, 0, 0]), sync: false } : (P.share ? { data: prevData, sync: true, ref: prevRef } : { data: prevData, sync: true }));
+        if (P.k === "movpng" && !P.share) total += prevData.length; else if (P.k === "rle") total += 7;
+      } else {
+        drawFrame(ctx, P.W, P.H, L, cards);
+        if (P.k === "rle") { const d = enc(ctx.getImageData(0, 0, P.W, P.H).data, isKey); samples.push({ data: d, sync: isKey }); total += d.length; prevData = d; }
+        else { const d = await toPng(canvas); total += d.length; prevData = d; prevRef = samples.length;
+          if (P.k === "png") files.push({ name: `seitenleiste_${String(kk + 1).padStart(4, "0")}.png`, data: d }); else samples.push({ data: d, sync: true }); }
+        prevKey = key;
+      }
+      if (total > HARD_LIMIT) throw new Error("Die Datei wird zu groß für den Browser. Bitte kürzeren Zeitraum oder niedrigere Auflösung wählen.");
+      const now = performance.now(); if (now - lastYield > 60) { report(kk / frames, `Bild ${kk + 1} von ${frames} (${sizeText(total)})`); await sleep0(); lastYield = performance.now(); }
+    }
+    report(1, "Schreibe Datei …"); await sleep0();
+    let blob, filename, info;
+    if (P.k === "png") { files.push({ name: "LIESMICH.txt", data: new TextEncoder().encode(ZIPTEXT({ ...P, n: frames })) }); blob = makeZip(files); filename = `${name}_png-sequenz.zip`; info = `${frames} PNG-Bilder (1 fps) als ZIP`; }
+    else { const m = buildMov({ fourcc: P.k === "rle" ? "rle " : "png ", width: P.W, height: P.H, fps: P.fps, samples, compressor: P.k === "rle" ? "Track Viewer Animation" : "Track Viewer PNG" }); blob = m.blob;
+      filename = `${name}_${P.fps}fps_${P.k === "rle" ? "mov-animation" : "mov-png"}.mov`; info = `${P.n} Bilder bei ${P.fps} fps (${fmtHMS(P.dur)})`; }
+    return { blob, filename, info, size: blob.size, P };
+  }
+
+  // ----- Zeitvorschau mit Regler (derselbe Zeichner wie der Export) -----
+  const PV = { t: 0, playing: false, last: 0, key: "", rangeKey: "", L: null };
+  const pvEls = ["pvSlider", "pvPlay", "pvStart", "pvEnd"];
+  function pvStop() { PV.playing = false; $("pvPlay").textContent = "▶ Abspielen"; }
+  function pvDraw(force) {
+    if (!current || !current.timed) return;
+    const P = plan();
+    if (P.error) { pvStop(); $("pvStage").style.display = "none"; pvEls.forEach(id => { $(id).disabled = true; }); $("pvMsg").textContent = P.error; $("pvLine").textContent = ""; $("pvTime").textContent = ""; PV.rangeKey = ""; return; }
+    $("pvStage").style.display = ""; pvEls.forEach(id => { $(id).disabled = false; }); $("pvMsg").textContent = "";
+    if ($("panelVo").hidden) return;                                   // nur zeichnen, solange der Reiter sichtbar ist
+    const rk = P.i0 + "-" + P.i1;
+    if (rk !== PV.rangeKey) { PV.rangeKey = rk; PV.t = 0; pvStop(); prepareData(); prepareRange(P.i0, P.i1); PV.key = ""; }
+    const smooth = smoothOf(kind());
+    $("pvSlider").max = P.dur; $("pvSlider").step = smooth ? 0.05 : 1;
+    PV.t = Math.min(P.dur, Math.max(0, PV.t));
+    $("pvSlider").value = PV.t;
+    $("pvTime").textContent = `${fmtHMS(PV.t)} von ${fmtHMS(P.dur)} · ${clockStr(new Date(current.timed[P.i0].time.getTime() + PV.t * 1000))} Uhr`;
+    $("pvLine").textContent = `${fmtHMS(PV.t)} von ${fmtHMS(P.dur)}`;
+    const tv = smooth ? R.ts + PV.t : R.ts + Math.floor(PV.t + 1e-9);
+    if (!PV.L) PV.L = readLayout();
+    const cards = cardsFor(PV.L, tv);
+    const stage = $("pvStage"), cssW = Math.max(320, stage.clientWidth || 700), dpr = window.devicePixelRatio || 1, w = Math.round(cssW * dpr), h = Math.round(cssW * 9 / 16 * dpr);
+    const key = JSON.stringify([cards.map(r => r.map(c => [c.label, c.value, c.unit, c.total])), PV.L.title, PV.L.side, PV.L.width, w]);
+    if (!force && key === PV.key) return;                              // nichts hat sich geändert: nicht neu zeichnen
+    PV.key = key;
+    const cv = $("pvCanvas"); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    drawFrame(cv.getContext("2d"), w, h, PV.L, cards);
+  }
+  function pvFrame(ts) {
+    if (!PV.playing) return;
+    const P = plan(); if (P.error || $("panelVo").hidden) { pvStop(); return; }
+    PV.t += (ts - PV.last) / 1000 * (+$("pvSpeed").value); PV.last = ts;
+    if (PV.t >= P.dur) { PV.t = P.dur; pvStop(); pvDraw(); return; }
+    pvDraw(); requestAnimationFrame(pvFrame);
+  }
+  $("pvPlay").addEventListener("click", () => {
+    if (PV.playing) return pvStop();
+    const P = plan(); if (P.error) return;
+    if (PV.t >= P.dur) PV.t = 0;
+    PV.playing = true; PV.last = performance.now(); $("pvPlay").textContent = "⏸ Pause"; requestAnimationFrame(pvFrame);
+  });
+  $("pvSlider").addEventListener("input", e => { pvStop(); PV.t = +e.target.value; pvDraw(); });
+  $("pvStart").addEventListener("click", () => { pvStop(); PV.t = 0; pvDraw(); });
+  $("pvEnd").addEventListener("click", () => { pvStop(); const P = plan(); if (!P.error) { PV.t = P.dur; pvDraw(); } });
+  $("pvBg").addEventListener("change", e => { $("pvStage").className = "pvstage " + (e.target.value === "checker" ? "checker" : e.target.value); });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (current && current.timed) pvDraw(true); }).observe($("pvStage"));
+
+  // ----- Oberfläche -----
+  const msgEl = () => $("exMsg");
+  function refresh() {
+    const P = (current && current.timed) ? plan() : { error: "Lade zuerst eine Datei." };
+    const k = kind();
+    document.querySelectorAll(".exopt").forEach(e => e.classList.toggle("sel", e.querySelector("input").checked));
+    $("exFps").disabled = k === "png"; if (k === "png") $("exFps").value = "1";
+    $("exSmoothWrap").style.display = k === "png" ? "none" : ""; $("exShareWrap").style.display = k === "movpng" ? "" : "none";
+    $("exGo").textContent = k === "png" ? "PNG-Sequenz erzeugen" : "MOV-Video erzeugen";
+    $("exGo").disabled = running || !!P.error; $("exEstimate").disabled = running || !!P.error;
+    $("exInfo").textContent = P.error ? P.error : `Zeitraum ${fmtHMS(P.dur)}, ${P.W} × ${P.H}, ${P.k === "png" ? Math.floor(P.dur) + 1 : P.n} Bilder` + (lastEstimate && lastEstimate.key === (P.k + "|" + P.fps + "|" + P.smooth + "|" + P.share + "|" + P.W + "|" + P.i0 + "|" + P.i1) ? `, geschätzte Größe ${sizeText(lastEstimate.bytes)}` + (lastEstimate.bytes > WARN_LIMIT ? " (sehr groß, evtl. langsam oder instabil)" : "") : "");
+    $("exLine").textContent = P.error ? "" : `${fmtHMS(P.dur)} · ${P.k === "png" ? "PNG-Sequenz" : P.k === "rle" ? "MOV Animation" : "MOV aus PNG"}`;
+    PV.L = null; PV.key = ""; pvDraw();                      // Zeitvorschau an neuen Stand anpassen
+  }
+  const radios = document.querySelectorAll('input[name="exFormat"]');
+  radios.forEach(r => r.addEventListener("change", () => { lastEstimate = null; refresh(); }));
+  ["exFps", "exSmooth", "exShare"].forEach(id => $(id).addEventListener("change", () => { lastEstimate = null; refresh(); }));
+  $("voRes").addEventListener("change", () => { lastEstimate = null; refresh(); });
+  $("exEstimate").addEventListener("click", async () => {
+    running = true; refresh(); msgEl().textContent = "Schätze …"; msgEl().classList.remove("err");
+    try { const e = await estimate(); msgEl().textContent = e.error ? e.error : ""; if (e.error) msgEl().classList.add("err"); }
+    catch (err) { msgEl().textContent = "Schätzung nicht möglich: " + err.message; msgEl().classList.add("err"); }
+    running = false; refresh();
+  });
+  $("exCancel").addEventListener("click", () => { cancelFlag = true; });
+  $("exGo").addEventListener("click", async () => {
+    running = true; cancelFlag = false; refresh(); $("exCancel").style.display = ""; $("exResult").innerHTML = ""; msgEl().classList.remove("err");
+    const prog = $("exProg"); prog.style.display = ""; prog.value = 0;
+    const t0 = performance.now();
+    try {
+      const res = await run((f, t) => { prog.value = f; msgEl().textContent = t; });
+      EXP_LAST.res = res; prog.value = 1;
+      const secs = (performance.now() - t0) / 1000;
+      msgEl().textContent = `Fertig in ${nfp(secs, 1)} s: ${res.info}, ${sizeText(res.size)}.`;
+      const box = $("exResult"); box.innerHTML = "";
+      const b = document.createElement("button"); b.type = "button"; b.textContent = `Herunterladen (${res.filename})`;
+      const note = document.createElement("span"); note.className = "muted"; note.style.marginLeft = "10px";
+      b.addEventListener("click", async () => { note.textContent = (await saveFile(res.filename, res.blob, res.blob.type)) || ""; });
+      box.append(b, note);
+    } catch (err) { msgEl().textContent = err.message; msgEl().classList.add("err"); prog.style.display = "none"; }
+    running = false; $("exCancel").style.display = "none"; refresh();
+  });
+  const EXP_LAST = { res: null };
+  expRefreshHook = refresh; refresh();
+  return { refresh, pausePreview: pvStop, showPreview: () => { PV.key = ""; pvDraw(true); }, run, estimate, plan, valuesAt, prepareData, prepareRange, last: EXP_LAST, _drawFrame: drawFrame, _cardsFor: cardsFor, _readLayout: readLayout, _setup: setup };
+})();
+
+
 // ---------- Reiter (Rohdaten / Overlay / Video-Overlay) ----------
-const TABS = [["tabOv", "panelOv"], ["tabVo", "panelVo"], ["tabRaw", "panelRaw"]];
+const TABS = [["tabOv", "panelOv"], ["tabVo", "panelVo"], ["tabDv", "panelDv"], ["tabRaw", "panelRaw"]];
 function setTab(tabId) {
   for (const [t, p] of TABS) {
     const on = t === tabId;
@@ -2050,6 +3086,9 @@ function setTab(tabId) {
     $(p).hidden = !on;
   }
   if (tabId === "tabOv") { fitOverlay(); fitOverlayText(); }
+  if (tabId !== "tabDv") DV.pause();
+  if (tabId !== "tabVo") EXP.pausePreview(); else EXP.showPreview();
+  if (tabId === "tabDv") DV.onShow();
   if (tabId === "tabVo") { fitVo(); fitOverlayText("#voTarget .ov-value"); }   // Größe neu berechnen, solange der Reiter sichtbar ist
 }
 TABS.forEach(([t], i) => {
@@ -2072,7 +3111,7 @@ async function handle(file) {
     const isGpx = file.name.toLowerCase().endsWith(".gpx");
     show(isGpx ? parseGpx(await file.text()) : parseFit(await file.arrayBuffer()), file.name);
   } catch (e) {
-    $("stats").classList.add("hidden"); $("tablewrap").classList.add("hidden"); $("actions").classList.add("hidden"); $("range").classList.add("hidden"); $("rangeMsg").textContent = ""; $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); $("vo").classList.add("hidden"); $("emptyState").classList.remove("hidden");
+    $("stats").classList.add("hidden"); $("tablewrap").classList.add("hidden"); $("actions").classList.add("hidden"); $("range").classList.add("hidden"); $("rangeMsg").textContent = ""; $("summary").classList.add("hidden"); $("overlay").classList.add("hidden"); $("vo").classList.add("hidden"); $("dv").classList.add("hidden"); $("emptyState").classList.remove("hidden");
     msg("Fehler: " + e.message, true);
   }
 }
