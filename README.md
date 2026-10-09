@@ -18,7 +18,7 @@ Das Tool besteht aus **einer einzigen HTML-Datei** (`fit-viewer.html`) mit Start
 
 ## Was kann das Tool?
 
-Beim Öffnen erscheint eine **Startseite** mit Kurzinfos, „Zur App“ führt in die App. Die App hat links eine **Seitenleiste** (Upload und Quicklook, ein- und ausklappbar, dazu der Knopf „Rohdaten ansehen“) und rechts drei Reiter: Fullscreen, Seitenleiste und Data-Viewer. Oben rechts wechselt ein Schalter zwischen **automatisch, hell und dunkel**.
+Beim Öffnen erscheint eine **Startseite** mit Kurzinfos, „Zur App“ führt in die App. Die App hat links eine **Seitenleiste** (Upload und Quicklook, ein- und ausklappbar, dazu der Knopf „Rohdaten ansehen“) und rechts drei Reiter: Fullscreen, Seitenleiste und Data-Viewer. Oben rechts wechselt ein Schalter zwischen **automatisch, hell und dunkel**, das Zahnrad daneben öffnet die **Einstellungen**.
 
 ### Fullscreen
 Ein Overlay in voller Bildgröße, gedacht für Endcards und Instagram-Beiträge.
@@ -44,6 +44,17 @@ Ein Overlay für den linken oder rechten Rand eines Videos, das den Stand **vom 
   - Zu jeder Option gibt es Vor- und Nachteile und einen Info-Tooltip, wie man sie im Schnittprogramm benutzt. Getestet mit DaVinci Resolve.
 - Einzelnes **PNG** in voller Bildgröße wie bisher
 
+### Design-Presets
+Ein gemeinsamer Bereich in den Reitern Fullscreen und Seitenleiste (beide zeigen dieselbe Wahl). Ein Look ändert Form, Schrift und Farben der Overlays, in der Vorschau und in allen Exporten.
+- **Classic** (wie bisher), **Modern** (Schrift schwebt, dunkler Verlauf), **Edgy** (schräge Ecke, Rahmen in Akzentfarbe), **Fancy** (Serifen, Pastell, Papierkarten), **Unplugged** (Pillen wie die Website, Überschrift mit Logo)
+- **Eigene Farben:** Akzentfarbe und Deckkraft
+- **Eigene Presets** speichern, umbenennen und löschen; sie bleiben im Browser gespeichert
+
+### Einstellungen (Zahnrad)
+- **Dezimalzeichen** Punkt oder Komma (Standard: Punkt)
+- **Tausendertrennzeichen** aus, Punkt oder Komma (Standard: aus)
+- Gilt überall: in der App, in den Vorschauen und in den erzeugten Overlays. CSV-Dateien bleiben unverändert.
+
 ### Data-Viewer
 Diagramm der geladenen Aktivität mit Zeitregler und Abspielen.
 - Wählbare Verläufe (u. a. Kalorien), X-Achse wahlweise Zeit nach Start, Uhrzeit oder Strecke, Glättung 5 s bis 60 s
@@ -58,13 +69,13 @@ Diagramm der geladenen Aktivität mit Zeitregler und Abspielen.
 
 1. Datei `fit-viewer.html` im Browser öffnen (oder die gehostete Seite aufrufen).
 2. Auf der Startseite **Zur App** wählen, dann links eine **FIT- oder GPX-Datei** auswählen oder hineinziehen.
-3. Im Reiter **Fullscreen** oder **Seitenleiste** Zeitraum bzw. Zeitpunkt wählen und das Layout anpassen.
+3. Im Reiter **Fullscreen** oder **Seitenleiste** Zeitraum bzw. Zeitpunkt wählen, Layout und Design-Preset anpassen.
 4. **PNG** (Fullscreen oder Seitenleiste) bzw. **PNG-Sequenz oder MOV** (Seitenleiste) herunterladen und im Schnittprogramm über das Video legen.
 
 ## Technik und Datenschutz
 
 - Eine einzige HTML-Datei mit reinem JavaScript, ohne Build-Schritt
-- **Schriften** sind eingebettet (auf die nötigen Zeichen gekürzt, Lizenz SIL OFL): [Sora](https://github.com/sora-xor/sora-font) für Überschriften, [Cormorant Garamond](https://github.com/CatharsisFonts/Cormorant) für den Namen
+- **Schriften** sind eingebettet (auf die nötigen Zeichen gekürzt, Lizenz SIL OFL): [Sora](https://github.com/sora-xor/sora-font) für Überschriften, [Cormorant Garamond](https://github.com/CatharsisFonts/Cormorant) für den Namen, dazu für die Overlay-Looks [Inter](https://github.com/rsms/inter) und [Chakra Petch](https://github.com/cadsondemak/Chakra-Petch)
 - Eigener FIT-Parser (Messpunkte sowie Session- und Lap-Daten) und GPX-Parser
 - Externe Bibliotheken, jeweils mit fester Version:
   - [SortableJS](https://sortablejs.github.io/Sortable/) 1.15.2 für Drag & Drop
@@ -80,26 +91,49 @@ Diagramm der geladenen Aktivität mit Zeitregler und Abspielen.
 - **Bewegungszeit** zählt Zeit mit mindestens 1 km/h. Andere Plattformen rechnen anders.
 - Unterstützt werden nur **FIT und GPX** (kein TCX oder KML).
 - Das Layout wird nicht automatisch gespeichert. Es lässt sich als **Backup-Datei** sichern und wieder importieren. Die Backup-Dateien tragen vorerst noch den alten Namen „track-viewer“, damit ältere Backups weiter laden. Ab der Beta wird das umbenannt, dann sind ältere Backups nicht mehr kompatibel.
-- Das **Aussehen der erzeugten Overlays** (orange Beschriftung) ist noch unverändert. Neue Designs und Presets folgen.
-- Die Auswahl hell/dunkel wird im Browser gemerkt, sonst wird nichts gespeichert.
+- Der gewählte **Look** wird noch nicht im Layout-Backup mitgesichert.
+- Der Look **Fancy** hat bewusst keinen Schatten unter den Karten, weil der PNG-Export ihn verzerrt darstellen würde.
+- Im Browser gemerkt werden: hell/dunkel, das Zahlenformat, der gewählte Look und eigene Presets. Sonst wird nichts gespeichert.
 - **WebM** wird nicht angeboten: WebM aus dem Browser zeigte in DaVinci Resolve Artefakte und nicht transparente Karten. Browser können kein ProRes erzeugen; der ffmpeg-Befehl dafür steht in der `LIESMICH.txt` der ZIP-Datei.
 - Der Video-Export läuft im Browser. Der Tab sollte dabei **im Vordergrund** bleiben, MOV-Dateien sind auf **4 GB** begrenzt, bei großen Exporten warnt das Tool vor dem Speicherbedarf.
 - Zeitbereiche in Kilometern werden beim Umrechnen gerundet („Von“ ab-, „Bis“ aufgerundet); hin und her schalten kann den Bereich um ein bis zwei Messpunkte erweitern.
 
 ## Geplant
 
-- **Design-Presets** (Farben, Schriften, Hintergründe der Boxen): speichern, laden, eigene Farben; Standard „Warm“, zweites Design „Kalt“
 - **Mehrere Dateien** (Mehrtagestouren, unterbrochene Aufzeichnung), automatische „Summe bis Vortag“
 - Behandlung zeitlich **überlappender** Dateien
 - **Feedback-Link** und GitHub-Link auf der Startseite
-- **Tausenderpunkt** ein/aus und Wahl des **Dezimaltrennzeichens**
 - **GitHub-Hosting-Seite** einrichten
 - Ab der Beta: Backup-Dateien umbenennen, **keine Kompatibilität** mit älteren Backups
-- Presets im Detail gestalten (in der Beta)
+- Presets im Detail gestalten (in der Beta), Look auch im Layout-Backup sichern
 
 ## Change Index
 
 > Die Datumsangaben vor dem 7. Oktober 2026 wurden nachträglich zugeordnet und können um einen Tag abweichen.
+
+### alpha_20261009_03 (2026-10-09)
+**Hauptfeature: Design-Presets für die Overlays.**
+- **Fünf Looks**, die Form, Schrift und Farben ändern: **Classic** (wie bisher), **Modern** (Schrift schwebt, dunkler Verlauf), **Edgy** (schräge Ecke, Rahmen in Akzentfarbe, technische Schrift), **Fancy** (Serifen, Pastell, Papierkarten mit Innenlinie), **Unplugged** (Pillen wie die Website, Überschrift mit Logo)
+- Neuer Bereich „Design-Presets“ in den Reitern **Fullscreen** und **Seitenleiste**, beide gespiegelt: eine Wahl gilt für beide
+- **Eigene Farben:** Akzentfarbe und Deckkraft, **eigene Presets** speichern, umbenennen und löschen (im Browser gespeichert)
+- Gilt für die Vorschau, die Zeitvorschau und alle Exporte (PNG, PNG-Sequenz, MOV)
+- Ziffern haben in den neuen Looks eine feste Breite, damit beim Hochzählen nichts springt
+- Classic sieht genau aus wie bisher
+
+### alpha_20261009_02 (2026-10-09)
+**Animierte Radfahrer-Szene als Vorschau-Hintergrund.**
+- **Startseite:** Im Fenster „Seitenleiste“ bei „Was drin steckt“ fährt beim Darüberfahren ein Radfahrer durch die Landschaft (kleines Easter Egg)
+- **Zeitvorschau:** Neuer Hintergrund „Radfahrer (animiert)“, damit man sieht, wie die Seitenleiste auf einem Video wirkt. Der Export bleibt unverändert und transparent.
+- Behoben: dunkle Ränder an den Beispiel-Fenstern der Startseite
+- Die Szene pausiert, wenn sie nicht sichtbar ist, und steht still bei der Systemeinstellung „Bewegung reduzieren“
+
+### alpha_20261009_01 (2026-10-09)
+**Neues Logo und Einstellungen für das Zahlenformat.**
+- **Neues Logo** (Ring mit Welle) auf der Startseite, in der App-Leiste und als Browser-Icon
+- **Einstellungen** (Zahnrad oben rechts): **Dezimalzeichen** (Punkt oder Komma) und **Tausendertrennzeichen** (aus, Punkt oder Komma). Standard: Punkt, kein Tausendertrennzeichen. Die Wahl gilt überall (App, Vorschauen und erzeugte Overlays) und wird im Browser gespeichert. CSV-Dateien bleiben unverändert.
+- Zahleneingaben (Summe bis Vortag, Kilometermarken) verstehen beide Schreibweisen
+- Behoben: Der Hell/Dunkel-Schalter löste im Data-Viewer einen Fehler aus
+- Hinweis: Overlays zeigen jetzt standardmäßig einen Punkt statt eines Kommas als Dezimalzeichen
 
 ### alpha_20261008_01 (2026-10-08)
 **Neues Aussehen: Das Tool heißt jetzt OverlayUnplugged (früher Track Viewer).**
