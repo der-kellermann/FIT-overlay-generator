@@ -1,10 +1,10 @@
 # OverlayUnplugged – Video Overlay Website
 
-> Früher „Track Viewer“. Die Datei heißt vorerst weiter `fit-viewer.html`.
+> Früher „Track Viewer“. Die Datei heißt vorerst weiter `fit-viewer.html`. Jetzt `index.html`.
 
 Ein kleines Browser-Tool, das **FIT- und GPX-Dateien** (Radfahren, Garmin, Wahoo & Co.) einliest, auswertet und daraus **Overlays als PNG, PNG-Sequenz oder MOV-Video** erzeugt, etwa für Endcards, Instagram-Beiträge oder als Seitenleiste in einem Video.
 
-Das Tool besteht aus **einer einzigen HTML-Datei** (`fit-viewer.html`) mit Startseite und App. Es gibt keinen Server und kein Konto. Deine Dateien werden **nur lokal im Browser** verarbeitet und nirgendwohin hochgeladen.
+Das Tool besteht aus **einer einzigen HTML-Datei** (`index.html`) mit Startseite und App. Es gibt keinen Server und kein Konto. Deine Dateien werden **nur lokal im Browser** verarbeitet und nirgendwohin hochgeladen.
 
 > ## ⚠️ Hinweis: Vibe-Coding-Projekt
 > Dieses Projekt ist **„vibe-coded“**: Es wurde von einem Programmier-Anfänger gemeinsam mit einer KI (Claude von Anthropic) in einem Dialog entwickelt.
